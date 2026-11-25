@@ -73,7 +73,7 @@
             stroke-linecap: butt;
         }
 
-        /* Corrección / verificación */
+        /* Corrección / verificación (solo visible en modo Práctica) */
         .seg-check-ok {
             stroke: #16a34a !important;
         }
@@ -264,6 +264,73 @@
     </div>
 
     <!-- ===================================================================== -->
+    <!-- MODAL DE GUARDAR Y CARGAR AVANCE EN EVALUACIÓN (.sav CIFRADO)         -->
+    <!-- ===================================================================== -->
+    <div id="sav-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="modal-card bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-7">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900">Guardar / Cargar avance</h3>
+                        <p class="text-xs text-slate-500">Archivo cifrado de evaluación (<code class="font-mono font-semibold text-indigo-600">.sav</code>)</p>
+                    </div>
+                </div>
+                <button id="btn-sav-close" type="button" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer" title="Cerrar">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 mb-4 space-y-1.5 text-xs text-slate-600">
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-500">Alumno/a activo:</span>
+                    <span id="sav-modal-user" class="font-bold text-slate-900 truncate max-w-[200px]">—</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-slate-500">Progreso actual:</span>
+                    <span id="sav-modal-summary" class="font-bold text-indigo-700">Básico 0/10 · Intermedio 0/10 · Avanzado 0/10</span>
+                </div>
+            </div>
+
+            <div id="sav-modal-error" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold leading-snug"></div>
+
+            <div class="space-y-2.5">
+                <button id="btn-sav-download" type="button" class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Guardar avance (.sav)</span>
+                </button>
+
+                <button id="btn-sav-upload" type="button" class="w-full py-3 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:scale-[0.99] text-slate-800 font-bold text-sm shadow-sm transition cursor-pointer flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Cargar avance (.sav)</span>
+                </button>
+                <input id="sav-file-input" type="file" accept=".sav" class="hidden">
+            </div>
+
+            <p class="text-[11px] text-slate-400 mt-4 leading-relaxed text-center">
+                El archivo <code class="font-mono">.sav</code> está cifrado y firmado para proteger la integridad de tu evaluación.
+            </p>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- BARRA SUPERIOR DE NAVEGACIÓN Y USUARIO                                -->
     <!-- ===================================================================== -->
     <header class="bg-white border-b border-slate-200 shrink-0 z-30 shadow-sm">
@@ -301,9 +368,19 @@
                 </button>
             </nav>
 
-            <!-- Perfil del Alumno (bloqueado) y Cerrar Sesión -->
+            <!-- Guardar/Cargar (Evaluación), Perfil del Alumno (bloqueado) y Cerrar Sesión -->
             <div class="flex items-center gap-2 ml-auto sm:ml-0">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 max-w-[170px] sm:max-w-[230px]" title="Nombre del alumno activo (bloqueado durante la sesión)">
+                <button id="btn-sav-manager" title="Guardar o cargar avance de evaluación (.sav)" class="hidden inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 active:scale-[0.98] text-indigo-700 text-xs font-bold shadow-sm transition cursor-pointer">
+                    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    <span class="hidden md:inline">Guardar / Cargar</span>
+                    <span class="md:hidden">.sav</span>
+                </button>
+
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 max-w-[150px] sm:max-w-[220px]" title="Nombre del alumno activo (bloqueado durante la sesión)">
                     <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0" id="header-user-avatar">A</span>
                     <span id="header-user-name" class="text-xs sm:text-sm font-semibold truncate">Alumno</span>
                 </div>
@@ -335,6 +412,15 @@
 
                 <!-- Acciones de práctica -->
                 <div class="flex flex-wrap items-center gap-2">
+                    <button id="btn-export-stl" title="Descargar la figura actual en formato .STL para impresión 3D" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Descargar .STL</span>
+                    </button>
+
                     <button id="btn-new-figure" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="23 4 23 10 17 10"></polyline>
@@ -413,7 +499,7 @@
                     </div>
                 </div>
 
-                <!-- Fila 2: Progreso 1..10 + Comprobar + Siguiente figura -->
+                <!-- Fila 2: Progreso 1..10 + Otra figura (misma dificultad) + Comprobar + Siguiente figura -->
                 <div class="flex flex-wrap items-center justify-between gap-2 bg-white rounded-xl border border-slate-200 px-3 py-1.5">
                     <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[220px]">
                         <div>
@@ -426,7 +512,16 @@
                         <div id="eval-step-pills" class="flex flex-wrap items-center gap-1"></div>
                     </div>
 
-                    <div class="flex items-center gap-2 ml-auto">
+                    <div class="flex flex-wrap items-center gap-2 ml-auto">
+                        <button id="btn-reroll-eval" title="Generar otra figura aleatoria de la misma dificultad que la actual" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-700 text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
+                            <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Otra figura</span>
+                        </button>
+
                         <button id="btn-check-eval" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="20 6 9 17 4 12"></polyline>
@@ -642,7 +737,7 @@
                                 </div>
                             </div>
 
-                            <!-- Resultado numérico -->
+                            <!-- Resultado numérico (solo Práctica o acierto 100% en Evaluación) -->
                             <div id="feedback-score-box" class="hidden space-y-1.5">
                                 <div class="flex items-baseline justify-between">
                                     <span class="text-[11px] sm:text-xs font-semibold text-slate-600">Precisión global</span>
@@ -705,11 +800,16 @@
          * =========================================================================
          */
         const STORAGE_KEY = 'diedricas3d_edu_v2';
+        const SAV_MAGIC = 'D3DSAV01';
+        const SAV_SECRET = 'TallerDiedricas3D_Evaluacion_Cifrada_2026_#ISOE';
         const GRID_SIZE = 3;
         const VIEWS = ['alzado', 'perfil', 'planta'];
         const PAD = 24;
         const CELL = 64;
         const TOTAL = PAD * 2 + CELL * GRID_SIZE; // 240
+
+        // Cámara isométrica estándar: Alzado (+Z) a la derecha, Perfil Izquierdo (-X) a la izquierda
+        const ISO_CAM_POS = [-5.2, 4.6, 5.2];
 
         const DIFFICULTY_META = {
             muy_facil:   { label: 'Muy fácil',   minBlocks: 5,  maxBlocks: 9,  minRamps: 0, maxRamps: 0, maxDashed: 2,  minDashed: 0, allowWedges: false, allowOverhang: false, minDiags: 0 },
@@ -781,7 +881,7 @@
         let scene, camera, renderer, controls, figureGroup, unitGridLines = null;
         let cameraAnim = null;
 
-        // Referencias SVG
+        // Referencias a los elementos SVG de las tres vistas
         const svgRefs = {};
 
         /* =========================================================================
@@ -791,6 +891,10 @@
             return Array.from({ length: GRID_SIZE }, () =>
                 Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null))
             );
+        }
+
+        function cloneGrid(grid) {
+            return grid.map(plane => plane.map(row => [...row]));
         }
 
         function createEmptyDrawings() {
@@ -829,10 +933,10 @@
             toastTimer = setTimeout(() => {
                 el.classList.add('opacity-0', 'translate-y-2');
                 el.classList.remove('opacity-100', 'translate-y-0');
-            }, 2400);
+            }, 2600);
         }
 
-        // Modal de confirmación personalizado (sin usar alert/confirm)
+        // Modal de confirmación personalizado (sin alert/confirm nativos)
         let confirmCallback = null;
         function openConfirmModal(title, message, okLabel, onConfirm) {
             document.getElementById('confirm-title').textContent = title;
@@ -936,6 +1040,214 @@
             document.getElementById('login-error').classList.add('hidden');
             document.getElementById('login-modal').classList.remove('hidden');
             setTimeout(() => document.getElementById('student-name-input').focus(), 80);
+        }
+
+        /* =========================================================================
+         * GUARDADO Y CARGA CIFRADA DE EVALUACIÓN (.sav con AES-GCM 256-bit)
+         * ========================================================================= */
+        async function deriveSavKey(saltBytes) {
+            const enc = new TextEncoder();
+            const baseKey = await window.crypto.subtle.importKey(
+                'raw',
+                enc.encode(SAV_SECRET),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            return window.crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: saltBytes,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                baseKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptSavPayload(payloadObj) {
+            const enc = new TextEncoder();
+            const magicBytes = enc.encode(SAV_MAGIC); // 8 bytes
+            const salt = window.crypto.getRandomValues(new Uint8Array(16));
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveSavKey(salt);
+            const plainBytes = enc.encode(JSON.stringify(payloadObj));
+
+            const cipherBuffer = await window.crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv },
+                key,
+                plainBytes
+            );
+            const cipherBytes = new Uint8Array(cipherBuffer);
+
+            const out = new Uint8Array(magicBytes.length + salt.length + iv.length + cipherBytes.length);
+            out.set(magicBytes, 0);
+            out.set(salt, magicBytes.length);
+            out.set(iv, magicBytes.length + salt.length);
+            out.set(cipherBytes, magicBytes.length + salt.length + iv.length);
+            return out.buffer;
+        }
+
+        async function decryptSavBuffer(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
+            if (bytes.length < 44) {
+                throw new Error('Archivo .sav demasiado corto o inválido.');
+            }
+            const dec = new TextDecoder();
+            const magic = dec.decode(bytes.slice(0, 8));
+            if (magic !== SAV_MAGIC) {
+                throw new Error('Formato de archivo no reconocido como .sav válido.');
+            }
+
+            const salt = bytes.slice(8, 24);
+            const iv = bytes.slice(24, 36);
+            const cipherBytes = bytes.slice(36);
+            const key = await deriveSavKey(salt);
+
+            let plainBuffer;
+            try {
+                plainBuffer = await window.crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv },
+                    key,
+                    cipherBytes
+                );
+            } catch (e) {
+                throw new Error('El archivo .sav está dañado o ha sido alterado y no puede descifrarse.');
+            }
+
+            const jsonStr = dec.decode(plainBuffer);
+            return JSON.parse(jsonStr);
+        }
+
+        function getEvalProgressSummaryText() {
+            const counts = ['basico', 'intermedio', 'avanzado'].map(lvlKey => {
+                const d = state.evalData[lvlKey];
+                const solved = d ? d.sequence.filter(s => s.solved).length : 0;
+                return `${EVAL_BLUEPRINTS[lvlKey].label} ${solved}/10`;
+            });
+            return counts.join(' · ');
+        }
+
+        function openSavModal() {
+            saveStateToStorage();
+            document.getElementById('sav-modal-user').textContent = state.userName || '—';
+            document.getElementById('sav-modal-summary').textContent = getEvalProgressSummaryText();
+            const errBox = document.getElementById('sav-modal-error');
+            errBox.classList.add('hidden');
+            errBox.textContent = '';
+            document.getElementById('sav-modal').classList.remove('hidden');
+        }
+
+        function closeSavModal() {
+            document.getElementById('sav-modal').classList.add('hidden');
+        }
+
+        async function handleDownloadSav() {
+            const errBox = document.getElementById('sav-modal-error');
+            errBox.classList.add('hidden');
+            try {
+                saveStateToStorage();
+                // Compactar evalData omitiendo miniaturas pesadas (se regeneran al vuelo para el PDF si faltan)
+                const compactEvalData = {};
+                for (const lvlKey of ['basico', 'intermedio', 'avanzado']) {
+                    const lvl = state.evalData[lvlKey];
+                    if (!lvl) {
+                        compactEvalData[lvlKey] = null;
+                        continue;
+                    }
+                    compactEvalData[lvlKey] = {
+                        currentIndex: lvl.currentIndex,
+                        sequence: lvl.sequence.map(item => ({
+                            difficulty: item.difficulty,
+                            grid: item.grid,
+                            drawings: cloneDrawings(item.drawings),
+                            solved: !!item.solved,
+                            thumbnail: null
+                        }))
+                    };
+                }
+
+                const payload = {
+                    version: 1,
+                    savedAt: new Date().toISOString(),
+                    userName: state.userName,
+                    evalLevel: state.evalLevel,
+                    evalData: compactEvalData
+                };
+
+                const encryptedBuffer = await encryptSavPayload(payload);
+                const blob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const safeUser = (state.userName || 'alumno')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9_-]+/g, '_');
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `avance_${safeUser}.sav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+                closeSavModal();
+                showToast('Archivo de avance .sav cifrado descargado');
+            } catch (err) {
+                console.error(err);
+                errBox.textContent = 'No se pudo generar el archivo .sav cifrado en este navegador.';
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        async function handleUploadSavFile(file) {
+            const errBox = document.getElementById('sav-modal-error');
+            errBox.classList.add('hidden');
+            if (!file) return;
+
+            try {
+                const buf = await file.arrayBuffer();
+                const payload = await decryptSavBuffer(buf);
+
+                if (!payload || typeof payload !== 'object' || !payload.userName || !payload.evalData) {
+                    throw new Error('El contenido del archivo .sav no es válido.');
+                }
+
+                // Verificar que corresponde al alumno activo
+                if (payload.userName.trim().toLowerCase() !== (state.userName || '').trim().toLowerCase()) {
+                    throw new Error(`Este archivo pertenece a «${payload.userName}». Cierra sesión e inicia con ese nombre para cargarlo.`);
+                }
+
+                // Validar estructura de los niveles
+                for (const lvlKey of ['basico', 'intermedio', 'avanzado']) {
+                    const lvl = payload.evalData[lvlKey];
+                    if (lvl !== null && lvl !== undefined) {
+                        if (!Array.isArray(lvl.sequence) || lvl.sequence.length !== 10) {
+                            throw new Error('Estructura de secuencias corrupta en el archivo .sav.');
+                        }
+                    }
+                }
+
+                state.evalData = {
+                    basico: payload.evalData.basico || null,
+                    intermedio: payload.evalData.intermedio || null,
+                    avanzado: payload.evalData.avanzado || null
+                };
+                state.evalLevel = ['basico', 'intermedio', 'avanzado'].includes(payload.evalLevel)
+                    ? payload.evalLevel
+                    : 'basico';
+
+                ensureEvalLevelInitialized(state.evalLevel);
+                loadEvalStep(state.evalData[state.evalLevel].currentIndex);
+                saveStateToStorage();
+                closeSavModal();
+                showToast('¡Avance de evaluación cargado correctamente!');
+            } catch (err) {
+                errBox.textContent = err.message || 'Error al cargar el archivo .sav.';
+                errBox.classList.remove('hidden');
+            }
         }
 
         /* =========================================================================
@@ -1106,6 +1418,81 @@
         }
 
         /* =========================================================================
+         * EXPORTACIÓN A .STL BINARIO (IMPRESIÓN 3D - ESCALA 10 mm / UNIDAD)
+         * ========================================================================= */
+        function exportCurrentFigureSTL() {
+            if (!state.meshData || !state.meshData.triangles || state.meshData.triangles.length === 0) {
+                showToast('No hay ninguna figura cargada para exportar');
+                return;
+            }
+
+            const tris = state.meshData.triangles;
+            const numTris = tris.length;
+            const buffer = new ArrayBuffer(84 + numTris * 50);
+            const view = new DataView(buffer);
+
+            // Cabecera ASCII de 80 bytes
+            const headerStr = `Binary STL - Vistas Diedricas 3D (${DIFFICULTY_META[state.practiceDifficulty]?.label || 'Pieza'})`;
+            for (let i = 0; i < 80; i++) {
+                view.setUint8(i, i < headerStr.length ? headerStr.charCodeAt(i) : 0);
+            }
+            view.setUint32(80, numTris, true);
+
+            // Transformación rígida de mano derecha: (x, y, z) -> (x*10, (3-z)*10, y*10)
+            // Deja Z_stl hacia arriba y la base y=0 apoyada en Z_stl=0 (30x30x30 mm)
+            const SCALE = 10;
+            const mapVertex = (v) => [
+                v[0] * SCALE,
+                (GRID_SIZE - v[2]) * SCALE,
+                v[1] * SCALE
+            ];
+            const mapNormal = (n) => [
+                n[0],
+                -n[2],
+                n[1]
+            ];
+
+            let offset = 84;
+            for (let i = 0; i < numTris; i++) {
+                const tri = tris[i];
+                const n = mapNormal(tri.normal);
+                const v0 = mapVertex(tri.v0);
+                const v1 = mapVertex(tri.v1);
+                const v2 = mapVertex(tri.v2);
+
+                view.setFloat32(offset, n[0], true); offset += 4;
+                view.setFloat32(offset, n[1], true); offset += 4;
+                view.setFloat32(offset, n[2], true); offset += 4;
+
+                view.setFloat32(offset, v0[0], true); offset += 4;
+                view.setFloat32(offset, v0[1], true); offset += 4;
+                view.setFloat32(offset, v0[2], true); offset += 4;
+
+                view.setFloat32(offset, v1[0], true); offset += 4;
+                view.setFloat32(offset, v1[1], true); offset += 4;
+                view.setFloat32(offset, v1[2], true); offset += 4;
+
+                view.setFloat32(offset, v2[0], true); offset += 4;
+                view.setFloat32(offset, v2[1], true); offset += 4;
+                view.setFloat32(offset, v2[2], true); offset += 4;
+
+                view.setUint16(offset, 0, true); offset += 2;
+            }
+
+            const blob = new Blob([buffer], { type: 'application/sla' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pieza_3d_${state.practiceDifficulty}_${Date.now().toString().slice(-4)}.stl`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            showToast('Archivo .STL descargado (30×30×30 mm)');
+        }
+
+        /* =========================================================================
          * PROYECCIÓN ORTOGRÁFICA Y VISIBILIDAD EXACTA POR RAYCASTING 2D
          * ========================================================================= */
         function projectPoint(p, view) {
@@ -1186,21 +1573,25 @@
                     let visSamples = 0, hidSamples = 0;
                     for (const t of sampleTs) {
                         const u = a.u + du * t, v = a.v + dv * t, d = a.d + (b.d - a.d) * t;
-                        if (isPointOccluded2D(u + pu, v + pv, d, projTris) && isPointOccluded2D(u - pu, v - pv, d, projTris)) {
-                            hidSamples++;
-                        } else {
-                            visSamples++;
-                        }
+                        const occPlus = isPointOccluded2D(u + pu, v + pv, d, projTris);
+                        const occMinus = isPointOccluded2D(u - pu, v - pv, d, projTris);
+                        if (occPlus && occMinus) hidSamples++;
+                        else visSamples++;
                     }
 
-                    if (visSamples > 0 && hidSamples > 0) hasAmbiguousEdge = true;
-                    if (visSamples > 0) solution[view][segId] = 'solid';
-                    else if (solution[view][segId] !== 'solid') solution[view][segId] = 'dashed';
+                    if (visSamples > 0 && hidSamples > 0) {
+                        hasAmbiguousEdge = true;
+                    }
+
+                    const type = visSamples > 0 ? 'solid' : 'dashed';
+                    if (solution[view][segId] !== 'solid') {
+                        solution[view][segId] = type;
+                    }
                 }
 
-                for (const [id, val] of Object.entries(solution[view])) {
-                    if (val === 'dashed') dashedCount++;
-                    if (id.startsWith('D')) diagCount++;
+                for (const [segId, type] of Object.entries(solution[view])) {
+                    if (type === 'dashed') dashedCount++;
+                    if (segId.startsWith('D')) diagCount++;
                 }
             }
 
@@ -1208,1235 +1599,1069 @@
         }
 
         /* =========================================================================
-         * GENERADOR DE FIGURAS POR NIVEL DE DIFICULTAD (5 NIVELES)
+         * GENERADOR ALEATORIO DE FIGURAS POR NIVEL DE DIFICULTAD
          * ========================================================================= */
-        function isGridConnected(grid) {
-            let total = 0, start = null;
-            for (let x = 0; x < GRID_SIZE; x++) {
-                for (let y = 0; y < GRID_SIZE; y++) {
-                    for (let z = 0; z < GRID_SIZE; z++) {
-                        if (grid[x][y][z]) { total++; if (!start) start = [x, y, z]; }
-                    }
-                }
-            }
-            if (total === 0) return false;
+        function generateCandidateGrid(cfg) {
+            const grid = createEmptyGrid();
+            const targetBlocks = cfg.minBlocks + Math.floor(Math.random() * (cfg.maxBlocks - cfg.minBlocks + 1));
 
-            const visited = new Set([start.join(',')]);
-            const queue = [start];
-            let count = 0;
-            const wallPairs = [
-                [1, 0, 0, 'px', 'nx'], [-1, 0, 0, 'nx', 'px'],
-                [0, 1, 0, 'py', 'ny'], [0, -1, 0, 'ny', 'py'],
-                [0, 0, 1, 'pz', 'nz'], [0, 0, -1, 'nz', 'pz']
+            // Comenzar con una base sólida apoyada en y = 0 para evitar figuras flotantes
+            const startX = Math.floor(Math.random() * GRID_SIZE);
+            const startZ = Math.floor(Math.random() * GRID_SIZE);
+            grid[startX][0][startZ] = 'cube';
+
+            const occupied = [[startX, 0, startZ]];
+            const dirs = [
+                [1, 0, 0], [-1, 0, 0],
+                [0, 1, 0], [0, -1, 0],
+                [0, 0, 1], [0, 0, -1]
             ];
 
-            while (queue.length > 0) {
-                const [cx, cy, cz] = queue.shift();
-                count++;
-                const ct = grid[cx][cy][cz];
-                for (const [dx, dy, dz, w1, w2] of wallPairs) {
-                    const nx = cx + dx, ny = cy + dy, nz = cz + dz;
-                    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || nz < 0 || nz >= GRID_SIZE) continue;
-                    const nt = grid[nx][ny][nz];
-                    if (!nt) continue;
-                    if ((CELL_WALL_MASKS[ct][w1] & CELL_WALL_MASKS[nt][w2]) === 0) continue;
-                    const key = `${nx},${ny},${nz}`;
-                    if (!visited.has(key)) { visited.add(key); queue.push([nx, ny, nz]); }
+            let guard = 0;
+            while (occupied.length < targetBlocks && guard < 400) {
+                guard++;
+                const base = occupied[Math.floor(Math.random() * occupied.length)];
+                const d = dirs[Math.floor(Math.random() * dirs.length)];
+                const nx = base[0] + d[0];
+                const ny = base[1] + d[1];
+                const nz = base[2] + d[2];
+
+                if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || nz < 0 || nz >= GRID_SIZE) continue;
+                if (grid[nx][ny][nz] !== null) continue;
+
+                // Si no se permiten voladizos, exigir apoyo debajo cuando ny > 0
+                if (!cfg.allowOverhang && ny > 0 && grid[nx][ny - 1][nz] !== 'cube') continue;
+
+                grid[nx][ny][nz] = 'cube';
+                occupied.push([nx, ny, nz]);
+            }
+
+            // Convertir algunos cubos exteriores en rampas o chaflanes según el nivel
+            if (cfg.maxRamps > 0) {
+                const targetRamps = cfg.minRamps + Math.floor(Math.random() * (cfg.maxRamps - cfg.minRamps + 1));
+                const candidates = [...occupied].sort(() => Math.random() - 0.5);
+
+                const rampTypes = ['ramp_pz', 'ramp_nz', 'ramp_px', 'ramp_nx'];
+                const wedgeTypes = ['wedge_pxpz', 'wedge_nxpz', 'wedge_pxnz', 'wedge_nxnz'];
+                const pool = cfg.allowWedges ? [...rampTypes, ...wedgeTypes] : rampTypes;
+
+                let placedRamps = 0;
+                for (const [x, y, z] of candidates) {
+                    if (placedRamps >= targetRamps) break;
+                    // No convertir un cubo que sostiene otro bloque encima en una rampa inclinada
+                    const hasAbove = (y + 1 < GRID_SIZE && grid[x][y + 1][z] !== null);
+                    const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
+
+                    for (const rType of shuffledPool) {
+                        if (hasAbove && rType.startsWith('ramp_')) continue;
+                        // Asegurar que la cara abierta de la rampa da al exterior
+                        if (rType === 'ramp_pz' && z + 1 < GRID_SIZE && grid[x][y][z + 1] !== null) continue;
+                        if (rType === 'ramp_nz' && z - 1 >= 0 && grid[x][y][z - 1] !== null) continue;
+                        if (rType === 'ramp_px' && x + 1 < GRID_SIZE && grid[x + 1][y][z] !== null) continue;
+                        if (rType === 'ramp_nx' && x - 1 >= 0 && grid[x - 1][y][z] !== null) continue;
+
+                        grid[x][y][z] = rType;
+                        placedRamps++;
+                        break;
+                    }
                 }
             }
-            return count === total;
+
+            return grid;
         }
 
-        function generateFigureForDifficulty(diffKey) {
+        function generateValidFigure(diffKey) {
             const cfg = DIFFICULTY_META[diffKey] || DIFFICULTY_META.medio;
-            const dirs = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+            let fallback = null;
 
-            let bestCandidate = null;
-            let bestPenalty = Infinity;
-
-            for (let attempt = 0; attempt < 45; attempt++) {
-                const grid = createEmptyGrid();
-                const targetCount = cfg.minBlocks + Math.floor(Math.random() * (cfg.maxBlocks - cfg.minBlocks + 1));
-                const cells = [];
-
-                let sx, sz;
-                if (diffKey === 'muy_facil') {
-                    sx = Math.random() < 0.5 ? 0 : 1;
-                    sz = 0;
-                } else {
-                    sx = Math.floor(Math.random() * GRID_SIZE);
-                    sz = Math.floor(Math.random() * GRID_SIZE);
-                }
-                grid[sx][0][sz] = 'cube';
-                cells.push([sx, 0, sz]);
-
-                while (cells.length < targetCount) {
-                    const candidates = [];
-                    for (const [cx, cy, cz] of cells) {
-                        for (const [dx, dy, dz] of dirs) {
-                            const nx = cx + dx, ny = cy + dy, nz = cz + dz;
-                            if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || nz < 0 || nz >= GRID_SIZE) continue;
-                            if (grid[nx][ny][nz]) continue;
-                            if (!cfg.allowOverhang && ny > 0 && grid[nx][ny - 1][nz] !== 'cube') continue;
-
-                            let weight = 1;
-                            if (diffKey === 'muy_facil') {
-                                weight = (ny === 0 ? 6 : 4) + (nz === 0 ? 3 : 0);
-                            } else if (diffKey === 'facil') {
-                                weight = ny === 0 ? 5 : 3;
-                            } else {
-                                if (ny === 0) weight = 4;
-                                else if (grid[nx][ny - 1][nz] === 'cube') weight = 3;
-                                else weight = diffKey === 'muy_dificil' ? 3 : 1;
-                            }
-                            for (let w = 0; w < weight; w++) candidates.push([nx, ny, nz]);
-                        }
-                    }
-                    if (candidates.length === 0) break;
-                    const [px, py, pz] = candidates[Math.floor(Math.random() * candidates.length)];
-                    grid[px][py][pz] = 'cube';
-                    cells.push([px, py, pz]);
-                }
-
-                // Añadir rampas y chaflanes según dificultad
-                let rampCount = 0;
-                const desiredRamps = cfg.minRamps + Math.floor(Math.random() * (cfg.maxRamps - cfg.minRamps + 1));
-
-                if (desiredRamps > 0) {
-                    const shuffled = [...cells].sort(() => Math.random() - 0.5);
-                    const hasCube = (x, y, z) =>
-                        x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && z >= 0 && z < GRID_SIZE && grid[x][y][z] === 'cube';
-                    const isEmpty = (x, y, z) =>
-                        x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || z < 0 || z >= GRID_SIZE || !grid[x][y][z];
-
-                    for (const [x, y, z] of shuffled) {
-                        if (rampCount >= desiredRamps) break;
-                        if (!isEmpty(x, y + 1, z)) continue;
-                        if (y > 0 && !hasCube(x, y - 1, z)) continue;
-
-                        const options = [];
-                        if (isEmpty(x, y, z + 1) && (z === 0 || hasCube(x, y, z - 1))) options.push('ramp_pz', 'ramp_pz');
-                        if (isEmpty(x, y, z - 1) && (z === 2 || hasCube(x, y, z + 1))) options.push('ramp_nz', 'ramp_nz');
-                        if (isEmpty(x + 1, y, z) && (x === 0 || hasCube(x - 1, y, z))) options.push('ramp_px', 'ramp_px');
-                        if (isEmpty(x - 1, y, z) && (x === 2 || hasCube(x + 1, y, z))) options.push('ramp_nx', 'ramp_nx');
-
-                        if (cfg.allowWedges) {
-                            if (isEmpty(x + 1, y, z) && isEmpty(x, y, z + 1) && (hasCube(x - 1, y, z) || hasCube(x, y, z - 1))) options.push('wedge_pxpz');
-                            if (isEmpty(x - 1, y, z) && isEmpty(x, y, z + 1) && (hasCube(x + 1, y, z) || hasCube(x, y, z - 1))) options.push('wedge_nxpz');
-                            if (isEmpty(x + 1, y, z) && isEmpty(x, y, z - 1) && (hasCube(x - 1, y, z) || hasCube(x, y, z + 1))) options.push('wedge_pxnz');
-                            if (isEmpty(x - 1, y, z) && isEmpty(x, y, z - 1) && (hasCube(x + 1, y, z) || hasCube(x, y, z + 1))) options.push('wedge_nxnz');
-                        }
-
-                        if (options.length === 0) continue;
-                        const chosen = options[Math.floor(Math.random() * options.length)];
-                        grid[x][y][z] = chosen;
-
-                        if (!isGridConnected(grid)) { grid[x][y][z] = 'cube'; continue; }
-                        const tm = buildExactMeshData(grid);
-                        if (tm.hasQuarterCut) { grid[x][y][z] = 'cube'; continue; }
-                        const ts = computeExactSolutions(tm);
-                        if (ts.hasAmbiguousEdge) { grid[x][y][z] = 'cube'; continue; }
-
-                        rampCount++;
-                    }
-                }
-
+            for (let attempt = 0; attempt < 180; attempt++) {
+                const grid = generateCandidateGrid(cfg);
                 const meshData = buildExactMeshData(grid);
-                if (meshData.hasQuarterCut) continue;
-                const solRes = computeExactSolutions(meshData);
-                if (solRes.hasAmbiguousEdge) continue;
+                if (meshData.hasQuarterCut || meshData.triangles.length === 0) continue;
 
-                let penalty = 0;
-                if (solRes.dashedCount > cfg.maxDashed) penalty += (solRes.dashedCount - cfg.maxDashed) * 4;
-                if (solRes.dashedCount < cfg.minDashed) penalty += (cfg.minDashed - solRes.dashedCount) * 4;
-                if (rampCount < cfg.minRamps) penalty += (cfg.minRamps - rampCount) * 6;
-                if (solRes.diagCount < cfg.minDiags) penalty += (cfg.minDiags - solRes.diagCount) * 3;
+                const { solution, hasAmbiguousEdge, dashedCount, diagCount } = computeExactSolutions(meshData);
+                if (hasAmbiguousEdge) continue;
 
-                let maxY = 0;
-                for (const [, y] of cells) if (y > maxY) maxY = y;
-                if (maxY < 1) penalty += 10;
+                const { cubes, ramps } = countPieces(grid);
+                const total = cubes + ramps;
 
-                if (penalty < bestPenalty) {
-                    bestPenalty = penalty;
-                    bestCandidate = { grid, meshData, solution: solRes.solution };
+                if (!fallback) {
+                    fallback = { grid, meshData, solution, cubes, ramps };
                 }
-                if (penalty === 0) break;
+
+                if (total < cfg.minBlocks || total > cfg.maxBlocks) continue;
+                if (ramps < cfg.minRamps || ramps > cfg.maxRamps) continue;
+                if (dashedCount < cfg.minDashed || dashedCount > cfg.maxDashed) continue;
+                if (diagCount < cfg.minDiags) continue;
+
+                return { grid, meshData, solution, cubes, ramps };
             }
 
-            return bestCandidate || {
-                grid: createEmptyGrid(),
-                meshData: buildExactMeshData(createEmptyGrid()),
-                solution: { alzado: {}, perfil: {}, planta: {} }
-            };
+            return fallback || (() => {
+                const grid = createEmptyGrid();
+                grid[0][0][0] = 'cube'; grid[1][0][0] = 'cube'; grid[0][1][0] = 'cube';
+                const meshData = buildExactMeshData(grid);
+                const { solution } = computeExactSolutions(meshData);
+                return { grid, meshData, solution, cubes: 3, ramps: 0 };
+            })();
         }
 
         /* =========================================================================
-         * GESTIÓN DE MODOS: PRÁCTICA Y EVALUACIÓN
+         * MOTOR 3D CON THREE.JS (SIN SOMBRAS, CON ETIQUETAS ALZADO / PERFIL IZQ.)
          * ========================================================================= */
-        function ensureEvalLevelInitialized(levelKey) {
-            if (state.evalData[levelKey] && Array.isArray(state.evalData[levelKey].sequence) && state.evalData[levelKey].sequence.length === 10) {
-                return state.evalData[levelKey];
-            }
-            const blueprint = EVAL_BLUEPRINTS[levelKey];
-            const sequence = blueprint.steps.map(diffKey => {
-                const fig = generateFigureForDifficulty(diffKey);
-                return {
-                    difficulty: diffKey,
-                    grid: fig.grid,
-                    solved: false,
-                    drawings: createEmptyDrawings(),
-                    thumbnail: null,
-                    solvedAt: null
-                };
-            });
-            state.evalData[levelKey] = {
-                sequence,
-                currentIndex: 0,
-                completed: false
-            };
-            return state.evalData[levelKey];
+        function createFloorLabelSprite(text, colorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+            ctx.beginPath();
+            ctx.roundRect(24, 18, 464, 92, 24);
+            ctx.fill();
+
+            ctx.strokeStyle = colorHex;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            ctx.fillStyle = colorHex;
+            ctx.font = '800 42px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 65);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.anisotropy = 4;
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(1.9, 0.48, 1);
+            return sprite;
         }
 
-        function loadGridIntoWorkspace(grid, drawings = null) {
-            state.grid = grid;
-            state.meshData = buildExactMeshData(grid);
-            state.solution = computeExactSolutions(state.meshData).solution;
-            const counts = countPieces(grid);
-            state.cubeCount = counts.cubes;
-            state.rampCount = counts.ramps;
+        let floorHelpersGroup = null;
 
-            state.drawings = drawings ? cloneDrawings(drawings) : createEmptyDrawings();
-            state.history = [];
-            state.checkActive = false;
-            state.showSolution = false;
-
-            const badge = document.getElementById('piece-stats-badge');
-            badge.textContent = state.rampCount > 0
-                ? `${state.cubeCount} cubos · ${state.rampCount} rampas`
-                : `${state.cubeCount} cubos`;
-
-            clearCheckOverlay();
-            renderSolutionOverlay();
-            renderAllUserDrawings();
-            updateUndoButton();
-            rebuild3DFigure();
-            animateCameraTo('iso');
-        }
-
-        function startPracticeFigure() {
-            const fig = generateFigureForDifficulty(state.practiceDifficulty);
-            loadGridIntoWorkspace(fig.grid, null);
-        }
-
-        function loadCurrentEvalFigure() {
-            const lvl = ensureEvalLevelInitialized(state.evalLevel);
-            const item = lvl.sequence[lvl.currentIndex];
-            loadGridIntoWorkspace(item.grid, item.drawings);
-            updateEvalUI();
-        }
-
-        function switchMode(newMode, isInit = false) {
-            if (!isInit && state.mode === 'eval') {
-                saveStateToStorage();
-            }
-
-            state.mode = newMode;
-            const isPractice = (newMode === 'practice');
-
-            document.getElementById('tab-practice').classList.toggle('active', isPractice);
-            document.getElementById('tab-eval').classList.toggle('active', !isPractice);
-            document.getElementById('bar-practice').classList.toggle('hidden', !isPractice);
-            document.getElementById('bar-eval').classList.toggle('hidden', isPractice);
-            document.getElementById('eval-solved-banner').classList.add('hidden');
-            document.getElementById('legend-missing-row').classList.toggle('hidden', !isPractice);
-
-            if (isPractice) {
-                startPracticeFigure();
-            } else {
-                loadCurrentEvalFigure();
-            }
-            saveStateToStorage();
-        }
-
-        function updateEvalUI() {
-            for (const key of ['basico', 'intermedio', 'avanzado']) {
-                const d = state.evalData[key];
-                const solved = d ? d.sequence.filter(s => s.solved).length : 0;
-                const badgeEl = document.getElementById(`badge-eval-${key}`);
-                if (badgeEl) badgeEl.textContent = `${solved}/10`;
-                const tabBtn = document.querySelector(`.eval-tab[data-eval-level="${key}"]`);
-                if (tabBtn) tabBtn.classList.toggle('active', key === state.evalLevel);
-            }
-
-            const lvl = ensureEvalLevelInitialized(state.evalLevel);
-            const idx = lvl.currentIndex;
-            const item = lvl.sequence[idx];
-            const solvedCount = lvl.sequence.filter(s => s.solved).length;
-            const allSolved = (solvedCount === 10);
-            lvl.completed = allSolved;
-
-            const diffLabel = DIFFICULTY_META[item.difficulty]?.label || item.difficulty;
-            document.getElementById('eval-figure-label').textContent = `Figura ${idx + 1} de 10 · ${diffLabel}`;
-            document.getElementById('eval-progress-bar').style.width = `${(solvedCount / 10) * 100}%`;
-
-            const pillsContainer = document.getElementById('eval-step-pills');
-            pillsContainer.innerHTML = '';
-            lvl.sequence.forEach((step, i) => {
-                const pill = document.createElement('button');
-                pill.type = 'button';
-                pill.textContent = step.solved ? '✓' : String(i + 1);
-                pill.title = `Figura ${i + 1} (${DIFFICULTY_META[step.difficulty].label})`;
-
-                let cls = 'w-6 h-6 rounded-lg text-[11px] font-bold flex items-center justify-center transition ';
-                if (i === idx) {
-                    cls += step.solved
-                        ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
-                        : 'bg-blue-600 text-white ring-2 ring-blue-300';
-                } else if (step.solved) {
-                    cls += 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer';
-                    pill.addEventListener('click', () => {
-                        saveStateToStorage();
-                        lvl.currentIndex = i;
-                        loadCurrentEvalFigure();
-                        saveStateToStorage();
-                    });
-                } else {
-                    cls += 'bg-slate-100 text-slate-400 cursor-not-allowed';
-                }
-                pill.className = cls;
-                pillsContainer.appendChild(pill);
-            });
-
-            const btnNext = document.getElementById('btn-next-eval');
-            const btnNextText = document.getElementById('btn-next-eval-text');
-            const solvedBanner = document.getElementById('eval-solved-banner');
-
-            if (item.solved) {
-                solvedBanner.classList.remove('hidden');
-                if (idx < 9) {
-                    btnNext.disabled = false;
-                    btnNextText.textContent = 'Siguiente figura →';
-                } else {
-                    btnNext.disabled = false;
-                    btnNextText.textContent = 'Ver Diploma Oficial ★';
-                }
-            } else {
-                solvedBanner.classList.add('hidden');
-                btnNext.disabled = true;
-                btnNextText.textContent = idx < 9 ? 'Siguiente figura →' : 'Completar evaluación';
-            }
-
-            document.getElementById('btn-pdf-official').classList.toggle('hidden', !allSolved);
-        }
-
-        function advanceEvalStep() {
-            const lvl = state.evalData[state.evalLevel];
-            if (!lvl) return;
-            const currentItem = lvl.sequence[lvl.currentIndex];
-            if (!currentItem.solved) {
-                showToast('Debes resolver correctamente esta figura antes de continuar');
-                return;
-            }
-
-            if (lvl.currentIndex < 9) {
-                lvl.currentIndex++;
-                loadCurrentEvalFigure();
-                saveStateToStorage();
-            } else {
-                openCongratsModal();
-            }
-        }
-
-        function openCongratsModal() {
-            document.getElementById('congrats-name').textContent = state.userName;
-            document.getElementById('congrats-level').textContent = EVAL_BLUEPRINTS[state.evalLevel].label;
-            document.getElementById('congrats-modal').classList.remove('hidden');
-        }
-
-        /* =========================================================================
-         * VISOR 3D CON THREE.JS (COMPLETAMENTE SIN SOMBRAS)
-         * ========================================================================= */
-        function init3D() {
+        function initThreeScene() {
             const container = document.getElementById('viewport-3d');
-            const width = container.clientWidth || 400;
-            const height = container.clientHeight || 360;
-
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
-            // Vista isométrica en octante (-X, +Y, +Z): Alzado (+Z) a la derecha y Perfil Izquierdo (-X) a la izquierda
-            camera.position.set(-5.2, 4.6, 5.2);
+            const w = container.clientWidth || 500;
+            const h = container.clientHeight || 400;
+            camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
+            camera.position.set(...ISO_CAM_POS);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setSize(width, height);
-            // SIN SOMBRAS (estricto)
-            renderer.shadowMap.enabled = false;
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true,
+                preserveDrawingBuffer: true
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(w, h);
+            renderer.shadowMap.enabled = false; // Sin sombras
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
             container.appendChild(renderer.domElement);
+
+            // Iluminación limpia sin sombras que diferencia claramente caras ortogonales e inclinadas
+            const ambient = new THREE.AmbientLight(0xffffff, 1.35);
+            scene.add(ambient);
+
+            const hemi = new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 0.65);
+            hemi.position.set(0, 10, 0);
+            scene.add(hemi);
+
+            const dirTop = new THREE.DirectionalLight(0xffffff, 0.85);
+            dirTop.position.set(4, 9, 6);
+            dirTop.castShadow = false;
+            scene.add(dirTop);
+
+            const dirLeft = new THREE.DirectionalLight(0xe2e8f0, 0.55);
+            dirLeft.position.set(-7, 4, 3);
+            dirLeft.castShadow = false;
+            scene.add(dirLeft);
+
+            const dirBack = new THREE.DirectionalLight(0xf1f5f9, 0.35);
+            dirBack.position.set(2, -3, -6);
+            dirBack.castShadow = false;
+            scene.add(dirBack);
 
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.08;
-            controls.enablePan = false;
             controls.minDistance = 4.2;
-            controls.maxDistance = 15;
+            controls.maxDistance = 14;
             controls.target.set(0, 0, 0);
-
-            // Iluminación limpia sin sombras proyectadas
-            scene.add(new THREE.AmbientLight(0xffffff, 0.48));
-
-            const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.35);
-            hemiLight.position.set(0, 10, 0);
-            scene.add(hemiLight);
-
-            const dirMain = new THREE.DirectionalLight(0xffffff, 0.62);
-            dirMain.position.set(6, 11, 8);
-            dirMain.castShadow = false;
-            scene.add(dirMain);
-
-            const dirFill = new THREE.DirectionalLight(0xe0f2fe, 0.36);
-            dirFill.position.set(-8, 4, -5);
-            dirFill.castShadow = false;
-            scene.add(dirFill);
-
-            const dirBottom = new THREE.DirectionalLight(0xfef3c7, 0.18);
-            dirBottom.position.set(2, -7, 3);
-            dirBottom.castShadow = false;
-            scene.add(dirBottom);
-
-            buildReferenceBase();
 
             figureGroup = new THREE.Group();
             scene.add(figureGroup);
 
-            const resizeObserver = new ResizeObserver(() => {
-                const w = container.clientWidth;
-                const h = container.clientHeight;
-                if (w > 0 && h > 0) {
-                    camera.aspect = w / h;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(w, h);
-                }
-            });
-            resizeObserver.observe(container);
+            // Base de referencia 3x3 y etiquetas direccionales
+            floorHelpersGroup = new THREE.Group();
+            const baseGrid = new THREE.GridHelper(3, 3, 0x94a3b8, 0xcbd5e1);
+            baseGrid.position.set(0, -1.502, 0);
+            floorHelpersGroup.add(baseGrid);
+
+            const lblAlzado = createFloorLabelSprite('ALZADO', '#2563eb');
+            lblAlzado.position.set(0, -1.42, 2.08);
+            floorHelpersGroup.add(lblAlzado);
+
+            const lblPerfil = createFloorLabelSprite('PERFIL IZQ.', '#d97706');
+            lblPerfil.position.set(-2.15, -1.42, 0);
+            floorHelpersGroup.add(lblPerfil);
+
+            scene.add(floorHelpersGroup);
+
+            window.addEventListener('resize', handleResize);
+            animateThree();
         }
 
-        function roundRectCanvas(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        }
-
-        function createFloorLabelTexture(text, colorHex) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, 512, 256);
-
-            ctx.fillStyle = colorHex;
-            ctx.strokeStyle = colorHex;
-            ctx.lineWidth = 10;
-            ctx.lineCap = 'round';
-
-            ctx.beginPath();
-            ctx.moveTo(256, 118);
-            ctx.lineTo(256, 36);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(222, 72);
-            ctx.lineTo(256, 28);
-            ctx.lineTo(290, 72);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-            roundRectCanvas(ctx, 96, 140, 320, 82, 24);
-            ctx.fill();
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = colorHex;
-            ctx.stroke();
-
-            ctx.fillStyle = colorHex;
-            ctx.font = '700 44px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, 256, 183);
-
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.anisotropy = 8;
-            return tex;
-        }
-
-        function buildReferenceBase() {
-            const baseY = -1.504;
-            const gridHelper = new THREE.GridHelper(3, 3, 0x94a3b8, 0xcbd5e1);
-            gridHelper.position.y = baseY;
-            scene.add(gridHelper);
-
-            const alzadoPlane = new THREE.Mesh(
-                new THREE.PlaneGeometry(2.3, 1.15),
-                new THREE.MeshBasicMaterial({ map: createFloorLabelTexture('ALZADO', '#2563eb'), transparent: true, side: THREE.DoubleSide })
-            );
-            alzadoPlane.rotation.x = -Math.PI / 2;
-            alzadoPlane.position.set(0, baseY + 0.008, 2.25);
-            scene.add(alzadoPlane);
-
-            const perfilPlane = new THREE.Mesh(
-                new THREE.PlaneGeometry(2.3, 1.15),
-                new THREE.MeshBasicMaterial({ map: createFloorLabelTexture('PERFIL', '#d97706'), transparent: true, side: THREE.DoubleSide })
-            );
-            perfilPlane.rotation.x = -Math.PI / 2;
-            perfilPlane.rotation.z = -Math.PI / 2;
-            perfilPlane.position.set(-2.25, baseY + 0.008, 0);
-            scene.add(perfilPlane);
-        }
-
-        function populateFigureGroup(targetGroup, grid, meshData, showGuide) {
-            while (targetGroup.children.length > 0) {
-                const child = targetGroup.children[0];
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) {
-                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-                    else child.material.dispose();
-                }
-                targetGroup.remove(child);
-            }
-
-            const off = -1.5;
-            const { triangles, realEdges } = meshData;
-
-            const posArr = new Float32Array(triangles.length * 9);
-            const normArr = new Float32Array(triangles.length * 9);
-            for (let i = 0; i < triangles.length; i++) {
-                const t = triangles[i];
-                const idx = i * 9;
-                posArr[idx]     = t.v0[0] + off; posArr[idx + 1] = t.v0[1] + off; posArr[idx + 2] = t.v0[2] + off;
-                posArr[idx + 3] = t.v1[0] + off; posArr[idx + 4] = t.v1[1] + off; posArr[idx + 5] = t.v1[2] + off;
-                posArr[idx + 6] = t.v2[0] + off; posArr[idx + 7] = t.v2[1] + off; posArr[idx + 8] = t.v2[2] + off;
-                for (let k = 0; k < 3; k++) {
-                    normArr[idx + k * 3]     = t.normal[0];
-                    normArr[idx + k * 3 + 1] = t.normal[1];
-                    normArr[idx + k * 3 + 2] = t.normal[2];
-                }
-            }
-
-            const solidGeo = new THREE.BufferGeometry();
-            solidGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-            solidGeo.setAttribute('normal', new THREE.BufferAttribute(normArr, 3));
-            const solidMesh = new THREE.Mesh(
-                solidGeo,
-                new THREE.MeshLambertMaterial({ color: 0xf1f5f9, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 })
-            );
-            targetGroup.add(solidMesh);
-
-            const edgePos = new Float32Array(realEdges.length * 6);
-            for (let i = 0; i < realEdges.length; i++) {
-                const e = realEdges[i];
-                const idx = i * 6;
-                edgePos[idx]     = e.p0[0] + off; edgePos[idx + 1] = e.p0[1] + off; edgePos[idx + 2] = e.p0[2] + off;
-                edgePos[idx + 3] = e.p1[0] + off; edgePos[idx + 4] = e.p1[1] + off; edgePos[idx + 5] = e.p1[2] + off;
-            }
-            const edgeGeo = new THREE.BufferGeometry();
-            edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
-            targetGroup.add(new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x0f172a })));
-
-            const guidePts = [];
-            for (let x = 0; x < GRID_SIZE; x++) {
-                for (let y = 0; y < GRID_SIZE; y++) {
-                    for (let z = 0; z < GRID_SIZE; z++) {
-                        if (!grid[x][y][z]) continue;
-                        const x0 = x + off, x1 = x + 1 + off;
-                        const y0 = y + off, y1 = y + 1 + off;
-                        const z0 = z + off, z1 = z + 1 + off;
-                        guidePts.push(
-                            x0,y0,z0, x1,y0,z0,  x1,y0,z0, x1,y0,z1,  x1,y0,z1, x0,y0,z1,  x0,y0,z1, x0,y0,z0,
-                            x0,y1,z0, x1,y1,z0,  x1,y1,z0, x1,y1,z1,  x1,y1,z1, x0,y1,z1,  x0,y1,z1, x0,y1,z0,
-                            x0,y0,z0, x0,y1,z0,  x1,y0,z0, x1,y1,z0,  x1,y0,z1, x1,y1,z1,  x0,y0,z1, x0,y1,z1
-                        );
-                    }
-                }
-            }
-            const guideGeo = new THREE.BufferGeometry();
-            guideGeo.setAttribute('position', new THREE.Float32BufferAttribute(guidePts, 3));
-            const lines = new THREE.LineSegments(guideGeo, new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.35 }));
-            lines.visible = showGuide;
-            targetGroup.add(lines);
-            return lines;
-        }
-
-        function rebuild3DFigure() {
-            unitGridLines = populateFigureGroup(figureGroup, state.grid, state.meshData, state.showUnitGrid);
-        }
-
-        /**
-         * Captura una imagen 3D isométrica limpia sobre fondo blanco (420x360)
-         * para incrustar en los certificados y diplomas PDF.
-         */
-        function captureIsometricThumbnail(gridToRender) {
-            const snapW = 420, snapH = 360;
-            const prevBg = scene.background;
-            const prevPos = camera.position.clone();
-            const prevTarget = controls.target.clone();
-            const prevAspect = camera.aspect;
-            const prevSize = new THREE.Vector2();
-            renderer.getSize(prevSize);
-            const prevPR = renderer.getPixelRatio();
-            const prevGrid = state.grid;
-            const prevMesh = state.meshData;
-
-            const isDifferentGrid = (gridToRender && gridToRender !== state.grid);
-            if (isDifferentGrid) {
-                populateFigureGroup(figureGroup, gridToRender, buildExactMeshData(gridToRender), false);
-            } else if (unitGridLines) {
-                unitGridLines.visible = false;
-            }
-
-            scene.background = new THREE.Color(0xffffff);
-            renderer.setPixelRatio(1);
-            renderer.setSize(snapW, snapH, false);
-            camera.aspect = snapW / snapH;
+        function handleResize() {
+            const container = document.getElementById('viewport-3d');
+            if (!container || !renderer || !camera) return;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if (w <= 0 || h <= 0) return;
+            camera.aspect = w / h;
             camera.updateProjectionMatrix();
-            camera.position.set(-5.2, 4.6, 5.2);
-            camera.lookAt(0, 0, 0);
-
-            renderer.render(scene, camera);
-            const dataUrl = renderer.domElement.toDataURL('image/png');
-
-            scene.background = prevBg;
-            renderer.setPixelRatio(prevPR);
-            renderer.setSize(prevSize.x, prevSize.y, false);
-            camera.aspect = prevAspect;
-            camera.updateProjectionMatrix();
-            camera.position.copy(prevPos);
-            controls.target.copy(prevTarget);
-            camera.lookAt(prevTarget);
-
-            if (isDifferentGrid) {
-                unitGridLines = populateFigureGroup(figureGroup, prevGrid, prevMesh, state.showUnitGrid);
-            } else if (unitGridLines) {
-                unitGridLines.visible = state.showUnitGrid;
-            }
-            renderer.render(scene, camera);
-            return dataUrl;
+            renderer.setSize(w, h);
         }
 
-        function animateCameraTo(preset) {
-            const dist = 8.4;
-            let targetPos;
-            if (preset === 'iso')         targetPos = new THREE.Vector3(-5.2, 4.6, 5.2);
-            else if (preset === 'alzado') targetPos = new THREE.Vector3(0, 0, dist);
-            else if (preset === 'planta') targetPos = new THREE.Vector3(0, dist, 0.01);
-            else if (preset === 'perfil') targetPos = new THREE.Vector3(-dist, 0, 0);
-
-            cameraAnim = {
-                startPos: camera.position.clone(),
-                endPos: targetPos,
-                startTime: performance.now(),
-                duration: 420
-            };
-        }
-
-        function animateLoop() {
-            requestAnimationFrame(animateLoop);
+        function animateThree() {
+            requestAnimationFrame(animateThree);
             if (cameraAnim) {
-                const t = Math.min(1, (performance.now() - cameraAnim.startTime) / cameraAnim.duration);
-                const ease = 1 - Math.pow(1 - t, 3);
+                cameraAnim.t = Math.min(1, cameraAnim.t + 0.075);
+                const ease = 1 - Math.pow(1 - cameraAnim.t, 3);
                 camera.position.lerpVectors(cameraAnim.startPos, cameraAnim.endPos, ease);
-                camera.lookAt(0, 0, 0);
-                if (t >= 1) cameraAnim = null;
+                controls.target.lerpVectors(cameraAnim.startTarget, cameraAnim.endTarget, ease);
+                if (cameraAnim.t >= 1) cameraAnim = null;
             }
             controls.update();
             renderer.render(scene, camera);
         }
 
-        /* =========================================================================
-         * TABLEROS DE DIBUJO SVG INTERACTIVOS
-         * (ARRASTRE CONTINUO DE VÉRTICE A VÉRTICE EN TIEMPO REAL SIN SOLTAR)
-         * ========================================================================= */
-        function getSvgCoords(svg, clientX, clientY) {
-            const ctm = svg.getScreenCTM();
-            if (ctm) {
-                const pt = svg.createSVGPoint();
-                pt.x = clientX;
-                pt.y = clientY;
-                const res = pt.matrixTransform(ctm.inverse());
-                return { x: res.x, y: res.y };
-            }
-            const rect = svg.getBoundingClientRect();
-            const scale = Math.min(rect.width / TOTAL, rect.height / TOTAL) || 1;
-            const offsetX = (rect.width - TOTAL * scale) / 2;
-            const offsetY = (rect.height - TOTAL * scale) / 2;
-            return {
-                x: (clientX - rect.left - offsetX) / scale,
-                y: (clientY - rect.top - offsetY) / scale
+        function setCameraPreset(preset) {
+            const endTarget = new THREE.Vector3(0, 0, 0);
+            let endPos;
+            if (preset === 'alzado')      endPos = new THREE.Vector3(0, 0, 7.6);
+            else if (preset === 'planta') endPos = new THREE.Vector3(0, 7.6, 0.001);
+            else if (preset === 'perfil') endPos = new THREE.Vector3(-7.6, 0, 0);
+            else                          endPos = new THREE.Vector3(...ISO_CAM_POS);
+
+            cameraAnim = {
+                startPos: camera.position.clone(),
+                endPos,
+                startTarget: controls.target.clone(),
+                endTarget,
+                t: 0
             };
         }
 
-        function findNearestVertex(x, y, maxDist = 26) {
-            let best = null, bestD = maxDist;
-            for (let r = 0; r <= GRID_SIZE; r++) {
-                for (let c = 0; c <= GRID_SIZE; c++) {
-                    const vx = PAD + c * CELL, vy = PAD + r * CELL;
-                    const d = Math.hypot(x - vx, y - vy);
-                    if (d < bestD) { bestD = d; best = { c, r, x: vx, y: vy, d }; }
+        function rebuild3DMesh() {
+            while (figureGroup.children.length > 0) {
+                const obj = figureGroup.children.pop();
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) obj.material.dispose();
+            }
+            unitGridLines = null;
+
+            if (!state.meshData) return;
+
+            const offset = GRID_SIZE / 2; // 1.5 para centrar el cubo 3x3x3 en (0,0,0)
+            const positions = [];
+            const normals = [];
+
+            for (const tri of state.meshData.triangles) {
+                for (const v of [tri.v0, tri.v1, tri.v2]) {
+                    positions.push(v[0] - offset, v[1] - offset, v[2] - offset);
+                    normals.push(tri.normal[0], tri.normal[1], tri.normal[2]);
                 }
             }
-            return best;
-        }
 
-        function getSegmentsBetweenVertices(v0, v1) {
-            const dc = v1.c - v0.c, dr = v1.r - v0.r;
-            if (dc === 0 && dr === 0) return [];
-            if (dc !== 0 && dr !== 0 && Math.abs(dc) !== Math.abs(dr)) return [];
-            const steps = Math.max(Math.abs(dc), Math.abs(dr));
-            const sc = Math.sign(dc), sr = Math.sign(dr);
-            const ids = [];
-            for (let i = 0; i < steps; i++) {
-                const cA = v0.c + sc * i, rA = v0.r + sr * i;
-                const cB = cA + sc, rB = rA + sr;
-                if (sr === 0) ids.push(`H-${rA}-${Math.min(cA, cB)}`);
-                else if (sc === 0) ids.push(`V-${Math.min(rA, rB)}-${cA}`);
-                else ids.push((sc === sr) ? `D2-${Math.min(rA, rB)}-${Math.min(cA, cB)}` : `D1-${Math.min(rA, rB)}-${Math.min(cA, cB)}`);
-            }
-            return ids;
-        }
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geom.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
 
-        const pointerState = {
-            active: false,
-            view: null,
-            drawAction: null,
-            currentVertex: null,
-            strokeChanged: false,
-            historyPushed: false
-        };
-
-        function buildDrawingGrids() {
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-
-            for (const view of VIEWS) {
-                const container = document.getElementById(`grid-${view}`);
-                container.innerHTML = '';
-
-                const svg = document.createElementNS(SVG_NS, 'svg');
-                svg.setAttribute('viewBox', `0 0 ${TOTAL} ${TOTAL}`);
-                svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-                svg.setAttribute('class', 'w-full h-full select-none draft-svg');
-                svg.addEventListener('contextmenu', (e) => e.preventDefault());
-
-                const layerGuide = document.createElementNS(SVG_NS, 'g');
-                const layerSolution = document.createElementNS(SVG_NS, 'g');
-                const layerMissing = document.createElementNS(SVG_NS, 'g');
-                const layerUser = document.createElementNS(SVG_NS, 'g');
-                const layerPreview = document.createElementNS(SVG_NS, 'g');
-                svg.append(layerGuide, layerSolution, layerMissing, layerUser, layerPreview);
-
-                const bgRect = document.createElementNS(SVG_NS, 'rect');
-                bgRect.setAttribute('x', PAD); bgRect.setAttribute('y', PAD);
-                bgRect.setAttribute('width', CELL * GRID_SIZE); bgRect.setAttribute('height', CELL * GRID_SIZE);
-                bgRect.setAttribute('fill', '#f8fafc'); bgRect.setAttribute('rx', '3');
-                layerGuide.appendChild(bgRect);
-
-                // Diagonales guía muy tenues
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    for (let c = 0; c < GRID_SIZE; c++) {
-                        const x0 = PAD + c * CELL, y0 = PAD + r * CELL;
-                        for (const [ax, ay, bx, by] of [[x0, y0, x0 + CELL, y0 + CELL], [x0, y0 + CELL, x0 + CELL, y0]]) {
-                            const dg = document.createElementNS(SVG_NS, 'line');
-                            dg.setAttribute('x1', ax); dg.setAttribute('y1', ay);
-                            dg.setAttribute('x2', bx); dg.setAttribute('y2', by);
-                            dg.setAttribute('stroke', '#f1f5f9'); dg.setAttribute('stroke-width', '1');
-                            layerGuide.appendChild(dg);
-                        }
-                    }
-                }
-
-                // Cuadrícula 3×3
-                for (let i = 0; i <= GRID_SIZE; i++) {
-                    const pos = PAD + i * CELL;
-                    const hG = document.createElementNS(SVG_NS, 'line');
-                    hG.setAttribute('x1', PAD); hG.setAttribute('y1', pos);
-                    hG.setAttribute('x2', PAD + CELL * GRID_SIZE); hG.setAttribute('y2', pos);
-                    hG.setAttribute('stroke', '#cbd5e1'); hG.setAttribute('stroke-width', '1.4');
-                    layerGuide.appendChild(hG);
-
-                    const vG = document.createElementNS(SVG_NS, 'line');
-                    vG.setAttribute('x1', pos); vG.setAttribute('y1', PAD);
-                    vG.setAttribute('x2', pos); vG.setAttribute('y2', PAD + CELL * GRID_SIZE);
-                    vG.setAttribute('stroke', '#cbd5e1'); vG.setAttribute('stroke-width', '1.4');
-                    layerGuide.appendChild(vG);
-                }
-
-                // Vértices 4×4 bien visibles
-                for (let r = 0; r <= GRID_SIZE; r++) {
-                    for (let c = 0; c <= GRID_SIZE; c++) {
-                        const dot = document.createElementNS(SVG_NS, 'circle');
-                        dot.setAttribute('cx', PAD + c * CELL); dot.setAttribute('cy', PAD + r * CELL);
-                        dot.setAttribute('r', '4.4'); dot.setAttribute('fill', '#64748b');
-                        layerGuide.appendChild(dot);
-                    }
-                }
-
-                svgRefs[view] = { svg, layerSolution, layerMissing, layerPreview, segments: {} };
-
-                const registerSeg = (id, x1, y1, x2, y2) => {
-                    const userLine = document.createElementNS(SVG_NS, 'line');
-                    userLine.setAttribute('x1', x1); userLine.setAttribute('y1', y1);
-                    userLine.setAttribute('x2', x2); userLine.setAttribute('y2', y2);
-                    userLine.setAttribute('class', 'seg-line');
-                    userLine.style.display = 'none';
-                    layerUser.appendChild(userLine);
-                    svgRefs[view].segments[id] = { x1, y1, x2, y2, userLine };
-                };
-
-                for (let r = 0; r <= GRID_SIZE; r++)
-                    for (let c = 0; c < GRID_SIZE; c++)
-                        registerSeg(`H-${r}-${c}`, PAD + c * CELL, PAD + r * CELL, PAD + (c + 1) * CELL, PAD + r * CELL);
-
-                for (let r = 0; r < GRID_SIZE; r++)
-                    for (let c = 0; c <= GRID_SIZE; c++)
-                        registerSeg(`V-${r}-${c}`, PAD + c * CELL, PAD + r * CELL, PAD + c * CELL, PAD + (r + 1) * CELL);
-
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    for (let c = 0; c < GRID_SIZE; c++) {
-                        const x0 = PAD + c * CELL, y0 = PAD + r * CELL;
-                        registerSeg(`D1-${r}-${c}`, x0, y0 + CELL, x0 + CELL, y0);
-                        registerSeg(`D2-${r}-${c}`, x0, y0, x0 + CELL, y0 + CELL);
-                    }
-                }
-
-                svg.addEventListener('pointerdown', (e) => handleSvgPointerDown(view, e));
-                svg.addEventListener('pointermove', (e) => handleSvgPointerMove(view, e));
-                svg.addEventListener('pointerleave', () => { if (!pointerState.active) clearPreviewLayer(view); });
-
-                container.appendChild(svg);
-            }
-
-            window.addEventListener('pointerup', handleGlobalPointerUp);
-            window.addEventListener('pointercancel', handleGlobalPointerUp);
-        }
-
-        function clearPreviewLayer(view) {
-            svgRefs[view].layerPreview.innerHTML = '';
-        }
-
-        function renderVertexDragPreview(view, { action, activeVertex = null, hoverVertex = null, cursorPt = null }) {
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const layer = svgRefs[view].layerPreview;
-            layer.innerHTML = '';
-            const color = action === 'eraser' ? '#f43f5e' : '#2563eb';
-
-            // Línea elástica sutil desde el último vértice alcanzado hasta el cursor actual
-            if (activeVertex && cursorPt) {
-                const guide = document.createElementNS(SVG_NS, 'line');
-                guide.setAttribute('x1', activeVertex.x); guide.setAttribute('y1', activeVertex.y);
-                guide.setAttribute('x2', cursorPt.x); guide.setAttribute('y2', cursorPt.y);
-                guide.setAttribute('stroke', color);
-                guide.setAttribute('stroke-width', '2');
-                guide.setAttribute('stroke-dasharray', '4 4');
-                guide.setAttribute('opacity', '0.45');
-                layer.appendChild(guide);
-            }
-
-            // Anillo en el vértice ancla activo
-            if (activeVertex) {
-                const ring = document.createElementNS(SVG_NS, 'circle');
-                ring.setAttribute('cx', activeVertex.x); ring.setAttribute('cy', activeVertex.y);
-                ring.setAttribute('r', '9.5'); ring.setAttribute('fill', color); ring.setAttribute('opacity', '0.24');
-                layer.appendChild(ring);
-
-                const dot = document.createElementNS(SVG_NS, 'circle');
-                dot.setAttribute('cx', activeVertex.x); dot.setAttribute('cy', activeVertex.y);
-                dot.setAttribute('r', '5.5'); dot.setAttribute('fill', color);
-                layer.appendChild(dot);
-            }
-
-            // Resaltado suave al pasar el ratón por un vértice antes de pulsar
-            if (hoverVertex) {
-                const ring = document.createElementNS(SVG_NS, 'circle');
-                ring.setAttribute('cx', hoverVertex.x); ring.setAttribute('cy', hoverVertex.y);
-                ring.setAttribute('r', '8.5'); ring.setAttribute('fill', color); ring.setAttribute('opacity', '0.18');
-                layer.appendChild(ring);
-
-                const dot = document.createElementNS(SVG_NS, 'circle');
-                dot.setAttribute('cx', hoverVertex.x); dot.setAttribute('cy', hoverVertex.y);
-                dot.setAttribute('r', '5.2'); dot.setAttribute('fill', color);
-                layer.appendChild(dot);
-            }
-        }
-
-        function handleSvgPointerDown(view, e) {
-            e.preventDefault();
-            try { svgRefs[view].svg.setPointerCapture(e.pointerId); } catch (_) {}
-
-            const pt = getSvgCoords(svgRefs[view].svg, e.clientX, e.clientY);
-            const startV = findNearestVertex(pt.x, pt.y, 28);
-            if (!startV) return;
-
-            const isRightClick = (e.button === 2);
-            pointerState.active = true;
-            pointerState.view = view;
-            pointerState.drawAction = isRightClick ? 'eraser' : state.tool;
-            pointerState.currentVertex = startV;
-            pointerState.strokeChanged = false;
-            pointerState.historyPushed = false;
-
-            renderVertexDragPreview(view, {
-                action: pointerState.drawAction,
-                activeVertex: startV,
-                cursorPt: pt
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xf8fafc,
+                roughness: 0.62,
+                metalness: 0.04,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 1
             });
-        }
 
-        function handleSvgPointerMove(view, e) {
-            const pt = getSvgCoords(svgRefs[view].svg, e.clientX, e.clientY);
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
+            figureGroup.add(mesh);
 
-            if (!pointerState.active) {
-                if (e.pointerType === 'mouse') {
-                    const hoverV = findNearestVertex(pt.x, pt.y, 24);
-                    if (hoverV) {
-                        renderVertexDragPreview(view, { action: state.tool, hoverVertex: hoverV });
-                    } else {
-                        clearPreviewLayer(view);
+            // Aristas reales geométricas en negro nítido
+            const edgePositions = [];
+            for (const e of state.meshData.realEdges) {
+                edgePositions.push(
+                    e.p0[0] - offset, e.p0[1] - offset, e.p0[2] - offset,
+                    e.p1[0] - offset, e.p1[1] - offset, e.p1[2] - offset
+                );
+            }
+            const edgeGeom = new THREE.BufferGeometry();
+            edgeGeom.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 });
+            figureGroup.add(new THREE.LineSegments(edgeGeom, edgeMat));
+
+            // Líneas sutiles de subdivisión 1x1x1 (opcionales)
+            const unitPositions = [];
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        if (!state.grid[x][y][z]) continue;
+                        const x0 = x - offset, x1 = x + 1 - offset;
+                        const y0 = y - offset, y1 = y + 1 - offset;
+                        const z0 = z - offset, z1 = z + 1 - offset;
+                        const boxEdges = [
+                            [x0,y0,z0, x1,y0,z0], [x1,y0,z0, x1,y0,z1], [x1,y0,z1, x0,y0,z1], [x0,y0,z1, x0,y0,z0],
+                            [x0,y1,z0, x1,y1,z0], [x1,y1,z0, x1,y1,z1], [x1,y1,z1, x0,y1,z1], [x0,y1,z1, x0,y1,z0],
+                            [x0,y0,z0, x0,y1,z0], [x1,y0,z0, x1,y1,z0], [x1,y0,z1, x1,y1,z1], [x0,y0,z1, x0,y1,z1]
+                        ];
+                        for (const seg of boxEdges) unitPositions.push(...seg);
                     }
                 }
-                return;
             }
+            const uGeom = new THREE.BufferGeometry();
+            uGeom.setAttribute('position', new THREE.Float32BufferAttribute(unitPositions, 3));
+            const uMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.45 });
+            unitGridLines = new THREE.LineSegments(uGeom, uMat);
+            unitGridLines.visible = state.showUnitGrid;
+            figureGroup.add(unitGridLines);
 
-            if (pointerState.view !== view) return;
-
-            // Detectar si el puntero pasa por encima de un nuevo vértice y generar las líneas al instante sin soltar
-            const targetV = findNearestVertex(pt.x, pt.y, 26);
-            if (targetV && (targetV.c !== pointerState.currentVertex.c || targetV.r !== pointerState.currentVertex.r)) {
-                const ids = getSegmentsBetweenVertices(pointerState.currentVertex, targetV);
-                if (ids.length > 0) {
-                    if (!pointerState.historyPushed) {
-                        pushHistory();
-                        pointerState.historyPushed = true;
-                    }
-
-                    const next = pointerState.drawAction === 'eraser' ? null : pointerState.drawAction;
-                    for (const id of ids) {
-                        const prev = state.drawings[view][id] || null;
-                        if (prev !== next) {
-                            pointerState.strokeChanged = true;
-                            if (next === null) delete state.drawings[view][id];
-                            else state.drawings[view][id] = next;
-                            renderUserSegment(view, id);
-                        }
-                    }
-
-                    if (pointerState.strokeChanged && state.checkActive) {
-                        clearCheckOverlay();
-                    }
-
-                    // El vértice alcanzado pasa a ser el nuevo punto de partida continuo
-                    pointerState.currentVertex = targetV;
-                }
-            }
-
-            renderVertexDragPreview(view, {
-                action: pointerState.drawAction,
-                activeVertex: pointerState.currentVertex,
-                cursorPt: pt
-            });
+            const badge = document.getElementById('piece-stats-badge');
+            badge.textContent = `${state.cubeCount} cubos · ${state.rampCount} rampas`;
         }
 
-        function handleGlobalPointerUp() {
-            if (!pointerState.active) return;
-            const view = pointerState.view;
-            clearPreviewLayer(view);
+        function captureCleanThumbnail() {
+            if (!renderer || !scene || !camera) return null;
+            const prevPos = camera.position.clone();
+            const prevTarget = controls.target.clone();
+            const prevUnitVis = unitGridLines ? unitGridLines.visible : false;
 
-            if (pointerState.strokeChanged) {
-                updateUndoButton();
-                saveStateToStorage();
-            } else if (pointerState.historyPushed && state.history.length > 0) {
-                state.history.pop();
-                updateUndoButton();
-            }
+            cameraAnim = null;
+            camera.position.set(...ISO_CAM_POS);
+            controls.target.set(0, 0, 0);
+            camera.lookAt(0, 0, 0);
+            if (unitGridLines) unitGridLines.visible = false;
 
-            pointerState.active = false;
-            pointerState.view = null;
-            pointerState.drawAction = null;
-            pointerState.currentVertex = null;
-            pointerState.strokeChanged = false;
-            pointerState.historyPushed = false;
+            scene.background = new THREE.Color(0xffffff);
+            renderer.render(scene, camera);
+            const dataUrl = renderer.domElement.toDataURL('image/png');
+
+            scene.background = null;
+            if (unitGridLines) unitGridLines.visible = prevUnitVis;
+            camera.position.copy(prevPos);
+            controls.target.copy(prevTarget);
+            controls.update();
+            renderer.render(scene, camera);
+
+            return dataUrl;
         }
 
-        function renderUserSegment(view, id) {
-            const ref = svgRefs[view].segments[id];
-            const val = state.drawings[view][id];
-            const line = ref.userLine;
-            line.classList.remove('seg-solid', 'seg-dashed', 'seg-check-ok', 'seg-check-wrong');
-            if (!val) {
-                line.style.display = 'none';
-            } else {
-                line.style.display = 'inline';
-                line.classList.add(val === 'solid' ? 'seg-solid' : 'seg-dashed');
-            }
-        }
+        // Renderiza offscreen una miniatura 3D de cualquier grid (usado si un archivo .sav no incluyó miniaturas)
+        function renderThumbnailForGrid(grid) {
+            const savedGrid = state.grid;
+            const savedMeshData = state.meshData;
+            const savedCubes = state.cubeCount;
+            const savedRamps = state.rampCount;
 
-        function renderAllUserDrawings() {
-            for (const view of VIEWS) {
-                for (const id of Object.keys(svgRefs[view].segments)) {
-                    renderUserSegment(view, id);
-                }
-            }
+            state.grid = grid;
+            state.meshData = buildExactMeshData(grid);
+            const counts = countPieces(grid);
+            state.cubeCount = counts.cubes;
+            state.rampCount = counts.ramps;
+            rebuild3DMesh();
+            const thumb = captureCleanThumbnail();
+
+            state.grid = savedGrid;
+            state.meshData = savedMeshData;
+            state.cubeCount = savedCubes;
+            state.rampCount = savedRamps;
+            rebuild3DMesh();
+
+            return thumb;
         }
 
         /* =========================================================================
-         * HISTORIAL, LIMPIEZA, COMPROBACIÓN Y SOLUCIÓN
+         * TABLERO DE DIBUJO EN SISTEMA EUROPEO (ARRASTRE CONTINUO VÉRTICE A VÉRTICE)
          * ========================================================================= */
-        function pushHistory() {
+        function segIdToCoords(segId) {
+            const parts = segId.split('-');
+            const kind = parts[0];
+            const r = parseInt(parts[1], 10);
+            const c = parseInt(parts[2], 10);
+            if (kind === 'H')  return { x1: PAD + c * CELL,       y1: PAD + r * CELL,       x2: PAD + (c + 1) * CELL, y2: PAD + r * CELL };
+            if (kind === 'V')  return { x1: PAD + c * CELL,       y1: PAD + r * CELL,       x2: PAD + c * CELL,       y2: PAD + (r + 1) * CELL };
+            if (kind === 'D2') return { x1: PAD + c * CELL,       y1: PAD + r * CELL,       x2: PAD + (c + 1) * CELL, y2: PAD + (r + 1) * CELL };
+            return                    { x1: PAD + c * CELL,       y1: PAD + (r + 1) * CELL, x2: PAD + (c + 1) * CELL, y2: PAD + r * CELL }; // D1
+        }
+
+        function verticesToSegId(r1, c1, r2, c2) {
+            const dr = r2 - r1;
+            const dc = c2 - c1;
+            if (Math.abs(dr) > 1 || Math.abs(dc) > 1 || (dr === 0 && dc === 0)) return null;
+            if (dr === 0) return `H-${r1}-${Math.min(c1, c2)}`;
+            if (dc === 0) return `V-${Math.min(r1, r2)}-${c1}`;
+            const r = Math.min(r1, r2);
+            const c = Math.min(c1, c2);
+            const isD2 = (r1 === r && c1 === c) || (r2 === r && c2 === c);
+            return isD2 ? `D2-${r}-${c}` : `D1-${r}-${c}`;
+        }
+
+        function createSvgEl(tag, attrs = {}) {
+            const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            return el;
+        }
+
+        function pushHistorySnapshot() {
             state.history.push(cloneDrawings(state.drawings));
             if (state.history.length > 60) state.history.shift();
             updateUndoButton();
         }
 
-        function undo() {
-            if (state.history.length === 0) return;
-            state.drawings = state.history.pop();
-            if (state.checkActive) clearCheckOverlay();
-            renderAllUserDrawings();
-            updateUndoButton();
-            saveStateToStorage();
-        }
-
-        function clearAllDrawings() {
-            const hasAny = VIEWS.some(v => Object.keys(state.drawings[v]).length > 0);
-            if (!hasAny) return;
-            pushHistory();
-            state.drawings = createEmptyDrawings();
-            if (state.checkActive) clearCheckOverlay();
-            renderAllUserDrawings();
-            saveStateToStorage();
-            showToast('Tablero limpiado');
-        }
-
         function updateUndoButton() {
-            document.getElementById('btn-undo').disabled = state.history.length === 0;
+            const btn = document.getElementById('btn-undo');
+            if (btn) btn.disabled = state.history.length === 0;
         }
 
-        function checkDrawing() {
-            state.checkActive = true;
-            const isPractice = (state.mode === 'practice');
-            const SVG_NS = 'http://www.w3.org/2000/svg';
+        function applySegmentAction(view, segId, actionMode) {
+            if (!segId) return false;
+            const current = state.drawings[view][segId] || null;
+            if (actionMode === 'eraser') {
+                if (!current) return false;
+                delete state.drawings[view][segId];
+                return true;
+            } else {
+                if (current === actionMode) return false;
+                state.drawings[view][segId] = actionMode;
+                return true;
+            }
+        }
 
-            let totalExpected = 0, correctCount = 0, wrongOrExtra = 0, missingCount = 0;
-            const perViewStats = {};
-
+        function buildDraftingBoards() {
             for (const view of VIEWS) {
-                const layerMissing = svgRefs[view].layerMissing;
-                layerMissing.innerHTML = '';
+                const container = document.getElementById(`grid-${view}`);
+                container.innerHTML = '';
 
-                const expectedMap = state.solution[view];
-                const userMap = state.drawings[view];
-                let vExpected = 0, vCorrect = 0, vErrors = 0, vMissing = 0;
+                const svg = createSvgEl('svg', {
+                    viewBox: `0 0 ${TOTAL} ${TOTAL}`,
+                    preserveAspectRatio: 'xMidYMid meet',
+                    class: 'draft-svg w-full h-full max-w-[230px] max-h-[230px]'
+                });
 
-                for (const id of Object.keys(svgRefs[view].segments)) {
-                    const exp = expectedMap[id] || null;
-                    const usr = userMap[id] || null;
-                    const ref = svgRefs[view].segments[id];
-                    ref.userLine.classList.remove('seg-check-ok', 'seg-check-wrong');
+                // Cuadrícula auxiliar tenue 3x3
+                const gridGroup = createSvgEl('g');
+                for (let i = 0; i <= GRID_SIZE; i++) {
+                    const pos = PAD + i * CELL;
+                    gridGroup.appendChild(createSvgEl('line', {
+                        x1: PAD, y1: pos, x2: TOTAL - PAD, y2: pos,
+                        stroke: '#e2e8f0', 'stroke-width': 1.5
+                    }));
+                    gridGroup.appendChild(createSvgEl('line', {
+                        x1: pos, y1: PAD, x2: pos, y2: TOTAL - PAD,
+                        stroke: '#e2e8f0', 'stroke-width': 1.5
+                    }));
+                }
+                svg.appendChild(gridGroup);
 
-                    if (exp) { totalExpected++; vExpected++; }
+                const solutionLayer = createSvgEl('g');
+                const drawnLayer = createSvgEl('g');
+                const missingLayer = createSvgEl('g');
+                const guideLayer = createSvgEl('g');
+                const vertexLayer = createSvgEl('g');
 
-                    if (exp && usr === exp) {
-                        correctCount++; vCorrect++;
-                        if (isPractice) ref.userLine.classList.add('seg-check-ok');
-                    } else if (usr && usr !== exp) {
-                        wrongOrExtra++; vErrors++;
-                        if (isPractice) ref.userLine.classList.add('seg-check-wrong');
-                    } else if (exp && !usr) {
-                        missingCount++; vMissing++;
-                        if (isPractice) {
-                            const missLine = document.createElementNS(SVG_NS, 'line');
-                            missLine.setAttribute('x1', ref.x1); missLine.setAttribute('y1', ref.y1);
-                            missLine.setAttribute('x2', ref.x2); missLine.setAttribute('y2', ref.y2);
-                            missLine.setAttribute('class', 'seg-check-missing');
-                            if (exp === 'dashed') missLine.setAttribute('stroke-dasharray', '6 6');
-                            layerMissing.appendChild(missLine);
-                        }
+                svg.appendChild(solutionLayer);
+                svg.appendChild(drawnLayer);
+                svg.appendChild(missingLayer);
+                svg.appendChild(guideLayer);
+                svg.appendChild(vertexLayer);
+
+                // Línea guía elástica mientras se arrastra de vértice a vértice
+                const previewLine = createSvgEl('line', {
+                    x1: 0, y1: 0, x2: 0, y2: 0,
+                    stroke: '#2563eb',
+                    'stroke-width': 3,
+                    'stroke-dasharray': '5 4',
+                    'stroke-linecap': 'round',
+                    opacity: 0,
+                    'pointer-events': 'none'
+                });
+                guideLayer.appendChild(previewLine);
+
+                // Anillo de vértice activo
+                const activeRing = createSvgEl('circle', {
+                    cx: 0, cy: 0, r: 9,
+                    fill: 'rgba(37, 99, 235, 0.16)',
+                    stroke: '#2563eb',
+                    'stroke-width': 2,
+                    opacity: 0,
+                    'pointer-events': 'none'
+                });
+                guideLayer.appendChild(activeRing);
+
+                // Puntos visibles en los 16 vértices (4x4)
+                const vertexDots = [];
+                for (let r = 0; r <= GRID_SIZE; r++) {
+                    for (let c = 0; c <= GRID_SIZE; c++) {
+                        const cx = PAD + c * CELL;
+                        const cy = PAD + r * CELL;
+                        const dot = createSvgEl('circle', {
+                            cx, cy, r: 4.2,
+                            fill: '#94a3b8',
+                            stroke: '#ffffff',
+                            'stroke-width': 1.5,
+                            'pointer-events': 'none'
+                        });
+                        vertexLayer.appendChild(dot);
+                        vertexDots.push({ r, c, cx, cy, dot });
                     }
                 }
-                perViewStats[view] = { expected: vExpected, correct: vCorrect, errors: vErrors, missing: vMissing };
+
+                svgRefs[view] = { svg, solutionLayer, drawnLayer, missingLayer, previewLine, activeRing, vertexDots };
+
+                // Estado de arrastre continuo por vértices
+                let isDragging = false;
+                let activeVertex = null;
+                let dragAction = 'solid';
+                let snapshotTaken = false;
+
+                const clientToSvgCoords = (clientX, clientY) => {
+                    const ctm = svg.getScreenCTM();
+                    if (!ctm) return { x: 0, y: 0 };
+                    const pt = svg.createSVGPoint();
+                    pt.x = clientX;
+                    pt.y = clientY;
+                    const res = pt.matrixTransform(ctm.inverse());
+                    return { x: res.x, y: res.y };
+                };
+
+                const findNearestVertex = (x, y, maxRadius) => {
+                    let best = null;
+                    let bestDist = maxRadius;
+                    for (const v of vertexDots) {
+                        const d = Math.hypot(x - v.cx, y - v.cy);
+                        if (d <= bestDist) {
+                            bestDist = d;
+                            best = v;
+                        }
+                    }
+                    return best;
+                };
+
+                const updateGuideVisuals = (pointerX, pointerY) => {
+                    if (!isDragging || !activeVertex) {
+                        previewLine.setAttribute('opacity', '0');
+                        activeRing.setAttribute('opacity', '0');
+                        return;
+                    }
+                    activeRing.setAttribute('cx', activeVertex.cx);
+                    activeRing.setAttribute('cy', activeVertex.cy);
+                    activeRing.setAttribute('stroke', dragAction === 'eraser' ? '#dc2626' : '#2563eb');
+                    activeRing.setAttribute('opacity', '1');
+
+                    previewLine.setAttribute('x1', activeVertex.cx);
+                    previewLine.setAttribute('y1', activeVertex.cy);
+                    previewLine.setAttribute('x2', pointerX);
+                    previewLine.setAttribute('y2', pointerY);
+                    previewLine.setAttribute('stroke', dragAction === 'eraser' ? '#dc2626' : '#2563eb');
+                    previewLine.setAttribute('opacity', '0.85');
+                };
+
+                svg.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                svg.addEventListener('pointerdown', (e) => {
+                    if (e.button !== 0 && e.button !== 2) return;
+                    e.preventDefault();
+                    svg.setPointerCapture(e.pointerId);
+
+                    const { x, y } = clientToSvgCoords(e.clientX, e.clientY);
+                    const startV = findNearestVertex(x, y, 24);
+                    if (!startV) return;
+
+                    isDragging = true;
+                    activeVertex = startV;
+                    dragAction = (e.button === 2) ? 'eraser' : state.tool;
+                    snapshotTaken = false;
+                    updateGuideVisuals(x, y);
+                });
+
+                svg.addEventListener('pointermove', (e) => {
+                    if (!isDragging || !activeVertex) return;
+                    e.preventDefault();
+                    const { x, y } = clientToSvgCoords(e.clientX, e.clientY);
+
+                    // Buscar si el puntero pasa por encima de un vértice vecino
+                    const nextV = findNearestVertex(x, y, 18);
+                    if (nextV && (nextV.r !== activeVertex.r || nextV.c !== activeVertex.c)) {
+                        const segId = verticesToSegId(activeVertex.r, activeVertex.c, nextV.r, nextV.c);
+                        if (segId) {
+                            if (!snapshotTaken) {
+                                pushHistorySnapshot();
+                                snapshotTaken = true;
+                            }
+                            const changed = applySegmentAction(view, segId, dragAction);
+                            if (changed) {
+                                if (state.checkActive) clearCheckFeedback();
+                                renderView(view);
+                                saveStateToStorage();
+                            }
+                            activeVertex = nextV;
+                        }
+                    }
+
+                    updateGuideVisuals(x, y);
+                });
+
+                const endDrag = (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    activeVertex = null;
+                    updateGuideVisuals(0, 0);
+                    if (e && e.pointerId !== undefined && svg.hasPointerCapture(e.pointerId)) {
+                        try { svg.releasePointerCapture(e.pointerId); } catch (_) {}
+                    }
+                };
+
+                svg.addEventListener('pointerup', endDrag);
+                svg.addEventListener('pointercancel', endDrag);
+
+                container.appendChild(svg);
+            }
+        }
+
+        function renderView(view) {
+            const refs = svgRefs[view];
+            if (!refs) return;
+
+            refs.solutionLayer.innerHTML = '';
+            refs.drawnLayer.innerHTML = '';
+            refs.missingLayer.innerHTML = '';
+
+            const userSegs = state.drawings[view] || {};
+            const solSegs = state.solution?.[view] || {};
+
+            // Superponer solución (solo en modo Práctica)
+            if (state.mode === 'practice' && state.showSolution) {
+                for (const [segId, type] of Object.entries(solSegs)) {
+                    const c = segIdToCoords(segId);
+                    refs.solutionLayer.appendChild(createSvgEl('line', {
+                        x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2,
+                        class: type === 'solid' ? 'seg-solution-solid' : 'seg-solution-dashed'
+                    }));
+                }
             }
 
-            const denom = totalExpected + wrongOrExtra;
-            const score = denom === 0 ? 100 : Math.round((correctCount / denom) * 100);
-            const isPerfect = (correctCount === totalExpected && wrongOrExtra === 0 && missingCount === 0);
+            // Dibujar aristas trazadas por el alumno
+            for (const [segId, type] of Object.entries(userSegs)) {
+                const c = segIdToCoords(segId);
+                let cls = `seg-line ${type === 'solid' ? 'seg-solid' : 'seg-dashed'}`;
+                if (state.checkActive && state.mode === 'practice') {
+                    const expected = solSegs[segId];
+                    cls += (expected === type) ? ' seg-check-ok' : ' seg-check-wrong';
+                }
+                refs.drawnLayer.appendChild(createSvgEl('line', {
+                    x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2,
+                    class: cls
+                }));
+            }
 
-            // En modo Evaluación, si hay errores NO se marcan aristas ni se dan pistas por vista
-            if (!isPractice && !isPerfect) {
+            // Mostrar aristas faltantes (solo en modo Práctica cuando Comprobar está activo)
+            if (state.checkActive && state.mode === 'practice') {
+                for (const [segId, expectedType] of Object.entries(solSegs)) {
+                    if (!userSegs[segId]) {
+                        const c = segIdToCoords(segId);
+                        const attrs = {
+                            x1: c.x1, y1: c.y1, x2: c.x2, y2: c.y2,
+                            class: 'seg-check-missing'
+                        };
+                        if (expectedType === 'dashed') attrs['stroke-dasharray'] = '6 5';
+                        refs.missingLayer.appendChild(createSvgEl('line', attrs));
+                    }
+                }
+            }
+        }
+
+        function renderAllViews() {
+            for (const view of VIEWS) renderView(view);
+        }
+
+        /* =========================================================================
+         * COMPROBACIÓN DE RESULTADOS (PRÁCTICA VS EVALUACIÓN)
+         * ========================================================================= */
+        function clearCheckFeedback() {
+            state.checkActive = false;
+            document.getElementById('feedback-default').classList.remove('hidden');
+            document.getElementById('feedback-eval-error').classList.add('hidden');
+            document.getElementById('feedback-score-box').classList.add('hidden');
+            document.getElementById('legend-check').classList.add('hidden');
+            renderAllViews();
+        }
+
+        function evaluateCurrentDrawings() {
+            let correct = 0;
+            let wrong = 0;
+            let missing = 0;
+
+            for (const view of VIEWS) {
+                const userSegs = state.drawings[view] || {};
+                const solSegs = state.solution?.[view] || {};
+
+                for (const [segId, type] of Object.entries(userSegs)) {
+                    if (solSegs[segId] === type) correct++;
+                    else wrong++;
+                }
+                for (const segId of Object.keys(solSegs)) {
+                    if (!userSegs[segId]) missing++;
+                }
+            }
+
+            const totalNeeded = correct + missing;
+            const denom = totalNeeded + wrong;
+            const percent = denom === 0 ? 100 : Math.round((correct / denom) * 100);
+            const isPerfect = (wrong === 0 && missing === 0);
+
+            return { correct, wrong, missing, percent, isPerfect };
+        }
+
+        function checkPracticeDrawing() {
+            state.checkActive = true;
+            const { correct, wrong, missing, percent, isPerfect } = evaluateCurrentDrawings();
+
+            document.getElementById('feedback-default').classList.add('hidden');
+            document.getElementById('feedback-eval-error').classList.add('hidden');
+            document.getElementById('feedback-score-box').classList.remove('hidden');
+            document.getElementById('legend-check').classList.remove('hidden');
+
+            const pctEl = document.getElementById('score-percent');
+            const barEl = document.getElementById('score-bar');
+            pctEl.textContent = `${percent}%`;
+            barEl.style.width = `${percent}%`;
+
+            if (isPerfect) {
+                pctEl.className = 'text-xl sm:text-2xl font-extrabold text-emerald-600';
+                barEl.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
+            } else if (percent >= 65) {
+                pctEl.className = 'text-xl sm:text-2xl font-extrabold text-amber-600';
+                barEl.className = 'h-full bg-amber-500 rounded-full transition-all duration-500';
+            } else {
+                pctEl.className = 'text-xl sm:text-2xl font-extrabold text-rose-600';
+                barEl.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
+            }
+
+            document.getElementById('score-details').innerHTML = `
+                <div>• Correctas: <strong>${correct}</strong></div>
+                <div>• Incorrectas/sobrantes: <strong>${wrong}</strong></div>
+                <div>• Faltantes: <strong>${missing}</strong></div>
+            `;
+
+            renderAllViews();
+            if (isPerfect) showToast('¡Excelente! Las tres vistas son 100% correctas.');
+        }
+
+        function checkEvaluationDrawing() {
+            const { isPerfect } = evaluateCurrentDrawings();
+            const lvl = state.evalData[state.evalLevel];
+            const item = lvl.sequence[lvl.currentIndex];
+
+            if (!isPerfect) {
+                // En evaluación NO se muestran pistas sobre aristas erróneas ni faltantes
+                state.checkActive = false;
                 document.getElementById('feedback-default').classList.add('hidden');
                 document.getElementById('feedback-score-box').classList.add('hidden');
                 document.getElementById('legend-check').classList.add('hidden');
                 document.getElementById('feedback-eval-error').classList.remove('hidden');
-                showToast('Hay errores en las vistas. Revisa tu dibujo e inténtalo de nuevo.');
+                renderAllViews();
+                showToast('Hay errores en las vistas. Revisa tu dibujo.');
                 return;
             }
 
-            document.getElementById('feedback-eval-error').classList.add('hidden');
+            // ¡100% correcta!
+            state.checkActive = true;
+            item.solved = true;
+            item.drawings = cloneDrawings(state.drawings);
+            item.thumbnail = captureCleanThumbnail();
+
             document.getElementById('feedback-default').classList.add('hidden');
-            document.getElementById('feedback-score-box').classList.remove('hidden');
-            document.getElementById('legend-check').classList.toggle('hidden', !isPractice);
-
-            const scoreEl = document.getElementById('score-percent');
-            const barEl = document.getElementById('score-bar');
-            scoreEl.textContent = `${score}%`;
-            barEl.style.width = `${score}%`;
-
-            if (isPerfect) {
-                scoreEl.className = 'text-2xl font-extrabold text-emerald-600';
-                barEl.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
-            } else if (score >= 70) {
-                scoreEl.className = 'text-2xl font-extrabold text-blue-600';
-                barEl.className = 'h-full bg-blue-500 rounded-full transition-all duration-500';
-            } else {
-                scoreEl.className = 'text-2xl font-extrabold text-amber-600';
-                barEl.className = 'h-full bg-amber-500 rounded-full transition-all duration-500';
-            }
-
-            const labels = { alzado: 'Alzado', perfil: 'Perfil Izq.', planta: 'Planta' };
-            document.getElementById('score-details').innerHTML = VIEWS.map(v => {
-                const st = perViewStats[v];
-                if (st.correct === st.expected && st.errors === 0) {
-                    return `<div class="flex justify-between"><span>${labels[v]}:</span> <span class="text-emerald-600 font-bold">¡Perfecto!</span></div>`;
-                }
-                const parts = [];
-                if (st.missing > 0) parts.push(`<span class="text-amber-600 font-semibold">faltan ${st.missing}</span>`);
-                if (st.errors > 0) parts.push(`<span class="text-rose-600 font-semibold">${st.errors} err.</span>`);
-                return `<div class="flex justify-between"><span>${labels[v]}:</span> <span>${parts.join(', ')}</span></div>`;
-            }).join('');
-
-            if (!isPractice && isPerfect) {
-                const lvl = state.evalData[state.evalLevel];
-                const item = lvl.sequence[lvl.currentIndex];
-                const wasAlreadySolved = item.solved;
-                item.solved = true;
-                item.drawings = cloneDrawings(state.drawings);
-                item.solvedAt = new Date().toISOString();
-                item.thumbnail = captureIsometricThumbnail(item.grid);
-
-                const totalSolved = lvl.sequence.filter(s => s.solved).length;
-                lvl.completed = (totalSolved === 10);
-                saveStateToStorage();
-                updateEvalUI();
-
-                if (lvl.completed && !wasAlreadySolved) {
-                    openCongratsModal();
-                } else {
-                    showToast('¡100% correcto! Figura guardada. Puedes continuar.');
-                }
-            } else if (isPerfect) {
-                showToast('¡Excelente! Todas las vistas son 100% correctas.');
-            }
-        }
-
-        function clearCheckOverlay() {
-            state.checkActive = false;
-            for (const view of VIEWS) {
-                svgRefs[view].layerMissing.innerHTML = '';
-                for (const id of Object.keys(svgRefs[view].segments)) {
-                    svgRefs[view].segments[id].userLine.classList.remove('seg-check-ok', 'seg-check-wrong');
-                }
-            }
             document.getElementById('feedback-eval-error').classList.add('hidden');
-            document.getElementById('feedback-default').classList.remove('hidden');
-            document.getElementById('feedback-score-box').classList.add('hidden');
+            document.getElementById('feedback-score-box').classList.remove('hidden');
             document.getElementById('legend-check').classList.add('hidden');
-        }
 
-        function toggleSolution() {
-            if (state.mode !== 'practice') return;
-            state.showSolution = !state.showSolution;
-            renderSolutionOverlay();
-        }
+            const pctEl = document.getElementById('score-percent');
+            const barEl = document.getElementById('score-bar');
+            pctEl.textContent = '100%';
+            pctEl.className = 'text-xl sm:text-2xl font-extrabold text-emerald-600';
+            barEl.style.width = '100%';
+            barEl.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
+            document.getElementById('score-details').innerHTML = `
+                <div class="text-emerald-700 font-semibold">• ¡Todas las aristas visibles y ocultas son exactas!</div>
+            `;
 
-        function renderSolutionOverlay() {
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const btnText = document.getElementById('btn-solution-text');
-            const btn = document.getElementById('btn-solution');
-            const active = state.showSolution && state.mode === 'practice';
+            saveStateToStorage();
+            updateEvalUI();
+            renderAllViews();
 
-            if (active) {
-                btnText.textContent = 'Ocultar solución';
-                btn.classList.add('bg-blue-50', 'border-blue-300', 'text-blue-700');
-                btn.classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
+            const solvedCount = lvl.sequence.filter(s => s.solved).length;
+            if (solvedCount === 10) {
+                document.getElementById('congrats-name').textContent = state.userName;
+                document.getElementById('congrats-level').textContent = EVAL_BLUEPRINTS[state.evalLevel].label;
+                document.getElementById('congrats-modal').classList.remove('hidden');
             } else {
-                btnText.textContent = 'Ver solución';
-                btn.classList.remove('bg-blue-50', 'border-blue-300', 'text-blue-700');
-                btn.classList.add('bg-white', 'border-slate-300', 'text-slate-700');
-            }
-
-            for (const view of VIEWS) {
-                const layer = svgRefs[view].layerSolution;
-                layer.innerHTML = '';
-                if (!active) continue;
-                for (const [id, type] of Object.entries(state.solution[view])) {
-                    const ref = svgRefs[view].segments[id];
-                    if (!ref) continue;
-                    const line = document.createElementNS(SVG_NS, 'line');
-                    line.setAttribute('x1', ref.x1); line.setAttribute('y1', ref.y1);
-                    line.setAttribute('x2', ref.x2); line.setAttribute('y2', ref.y2);
-                    line.setAttribute('class', type === 'solid' ? 'seg-solution-solid' : 'seg-solution-dashed');
-                    layer.appendChild(line);
-                }
+                showToast('¡Figura correcta! Ya puedes avanzar a la siguiente.');
             }
         }
 
         /* =========================================================================
-         * GENERACIÓN DE DIPLOMAS Y CERTIFICADOS EN PDF 100% RASTERIZADOS (CANVAS)
-         * CON PATRÓN ANTIFALSIFICACIÓN DE LÍNEAS ALEATORIAS EN EL FONDO
+         * GESTIÓN DE MODOS: PRÁCTICA Y EVALUACIÓN
          * ========================================================================= */
-        const PDF_CANVAS_W = 1654; // A4 vertical a ~200 DPI (210 × 297 mm)
-        const PDF_CANVAS_H = 2339;
+        function loadFigureIntoWorkspace(grid, savedDrawings = null) {
+            state.grid = cloneGrid(grid);
+            state.meshData = buildExactMeshData(state.grid);
+            const { solution } = computeExactSolutions(state.meshData);
+            state.solution = solution;
+            const counts = countPieces(state.grid);
+            state.cubeCount = counts.cubes;
+            state.rampCount = counts.ramps;
 
-        function loadImageAsync(src) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = (err) => reject(err);
-                img.src = src;
+            state.drawings = savedDrawings ? cloneDrawings(savedDrawings) : createEmptyDrawings();
+            state.history = [];
+            state.showSolution = false;
+            document.getElementById('btn-solution-text').textContent = 'Ver solución';
+
+            clearCheckFeedback();
+            updateUndoButton();
+            rebuild3DMesh();
+            renderAllViews();
+        }
+
+        function startNewPracticeFigure() {
+            const generated = generateValidFigure(state.practiceDifficulty);
+            loadFigureIntoWorkspace(generated.grid);
+        }
+
+        function ensureEvalLevelInitialized(lvlKey) {
+            if (state.evalData[lvlKey] && Array.isArray(state.evalData[lvlKey].sequence) && state.evalData[lvlKey].sequence.length === 10) {
+                return;
+            }
+            const blueprint = EVAL_BLUEPRINTS[lvlKey];
+            const sequence = blueprint.steps.map(diffKey => {
+                const gen = generateValidFigure(diffKey);
+                return {
+                    difficulty: diffKey,
+                    grid: gen.grid,
+                    drawings: createEmptyDrawings(),
+                    solved: false,
+                    thumbnail: null
+                };
             });
+            state.evalData[lvlKey] = {
+                currentIndex: 0,
+                sequence
+            };
         }
 
-        function drawCanvasRoundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
+        function loadEvalStep(index) {
+            const lvl = state.evalData[state.evalLevel];
+            if (!lvl) return;
+            lvl.currentIndex = Math.max(0, Math.min(9, index));
+            const item = lvl.sequence[lvl.currentIndex];
+            loadFigureIntoWorkspace(item.grid, item.drawings);
+            updateEvalUI();
         }
 
-        /**
-         * Dibuja un patrón antifalsificación de líneas rectas aleatorias en gris muy claro
-         * por todo el fondo de la página antes de pintar marcos, textos y gráficos.
-         */
+        function rerollCurrentEvalFigure() {
+            const lvl = state.evalData[state.evalLevel];
+            if (!lvl) return;
+            const idx = lvl.currentIndex;
+            const currentItem = lvl.sequence[idx];
+            const diffKey = currentItem.difficulty;
+
+            const performReroll = () => {
+                const generated = generateValidFigure(diffKey);
+                lvl.sequence[idx] = {
+                    difficulty: diffKey,
+                    grid: generated.grid,
+                    drawings: createEmptyDrawings(),
+                    solved: false,
+                    thumbnail: null
+                };
+                loadEvalStep(idx);
+                saveStateToStorage();
+                showToast(`Nueva figura generada (${DIFFICULTY_META[diffKey].label})`);
+            };
+
+            if (currentItem.solved) {
+                openConfirmModal(
+                    'Generar otra figura',
+                    'Esta figura ya está resuelta. Si generas otra figura de la misma dificultad, tendrás que resolverla de nuevo. ¿Deseas continuar?',
+                    'Sí, generar otra',
+                    performReroll
+                );
+            } else {
+                performReroll();
+            }
+        }
+
+        function updateEvalUI() {
+            // Actualizar insignias X/10 en las 3 pestañas de nivel
+            for (const lvlKey of ['basico', 'intermedio', 'avanzado']) {
+                const d = state.evalData[lvlKey];
+                const solved = d ? d.sequence.filter(s => s.solved).length : 0;
+                const badge = document.getElementById(`badge-eval-${lvlKey}`);
+                if (badge) badge.textContent = `${solved}/10`;
+            }
+
+            document.querySelectorAll('.eval-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.evalLevel === state.evalLevel);
+            });
+
+            const lvl = state.evalData[state.evalLevel];
+            if (!lvl) return;
+
+            const idx = lvl.currentIndex;
+            const item = lvl.sequence[idx];
+            const solvedCount = lvl.sequence.filter(s => s.solved).length;
+
+            document.getElementById('eval-figure-label').textContent =
+                `Figura ${idx + 1} de 10 · ${DIFFICULTY_META[item.difficulty].label}`;
+            document.getElementById('eval-progress-bar').style.width = `${solvedCount * 10}%`;
+
+            // Primer índice aún no resuelto (máximo desbloqueado)
+            const firstUnsolved = lvl.sequence.findIndex(s => !s.solved);
+            const maxUnlocked = firstUnsolved === -1 ? 9 : firstUnsolved;
+
+            const pillsContainer = document.getElementById('eval-step-pills');
+            pillsContainer.innerHTML = '';
+            lvl.sequence.forEach((stepItem, i) => {
+                const unlocked = i <= maxUnlocked;
+                const isCurrent = i === idx;
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.textContent = `${i + 1}`;
+                pill.disabled = !unlocked;
+
+                let cls = 'w-6 h-6 rounded-lg text-[11px] font-bold transition flex items-center justify-center ';
+                if (stepItem.solved) {
+                    cls += isCurrent
+                        ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 cursor-pointer'
+                        : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer';
+                } else if (isCurrent) {
+                    cls += 'bg-blue-600 text-white ring-2 ring-blue-300 cursor-pointer';
+                } else if (unlocked) {
+                    cls += 'bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer';
+                } else {
+                    cls += 'bg-slate-100 text-slate-400 cursor-not-allowed';
+                }
+                pill.className = cls;
+
+                if (unlocked) {
+                    pill.addEventListener('click', () => {
+                        saveStateToStorage();
+                        loadEvalStep(i);
+                    });
+                }
+                pillsContainer.appendChild(pill);
+            });
+
+            // Banner de figura resuelta y botón Siguiente
+            document.getElementById('eval-solved-banner').classList.toggle('hidden', !item.solved);
+
+            const btnNext = document.getElementById('btn-next-eval');
+            const btnNextText = document.getElementById('btn-next-eval-text');
+            if (idx < 9) {
+                btnNext.disabled = !item.solved;
+                btnNextText.textContent = 'Siguiente figura →';
+            } else {
+                btnNext.disabled = true;
+                btnNextText.textContent = item.solved ? '¡Nivel completado!' : 'Última figura';
+            }
+
+            // Botón de Diploma Oficial visible solo al lograr 10/10
+            document.getElementById('btn-pdf-official').classList.toggle('hidden', solvedCount < 10);
+        }
+
+        function switchMode(newMode, skipSave = false) {
+            if (state.mode === 'eval' && newMode !== 'eval') {
+                saveStateToStorage();
+            }
+            state.mode = newMode;
+
+            document.getElementById('tab-practice').classList.toggle('active', newMode === 'practice');
+            document.getElementById('tab-eval').classList.toggle('active', newMode === 'eval');
+
+            document.getElementById('bar-practice').classList.toggle('hidden', newMode !== 'practice');
+            document.getElementById('bar-eval').classList.toggle('hidden', newMode !== 'eval');
+            document.getElementById('btn-sav-manager').classList.toggle('hidden', newMode !== 'eval');
+
+            if (newMode === 'practice') {
+                document.getElementById('eval-solved-banner').classList.add('hidden');
+                startNewPracticeFigure();
+            } else {
+                ensureEvalLevelInitialized(state.evalLevel);
+                loadEvalStep(state.evalData[state.evalLevel].currentIndex);
+            }
+
+            setTimeout(handleResize, 30);
+            if (!skipSave) saveStateToStorage();
+        }
+
+        function setMobileView(viewMode) {
+            state.mobileView = viewMode;
+            const panel3d = document.getElementById('panel-3d');
+            const panelDraw = document.getElementById('panel-draw');
+            const main = document.getElementById('main-workspace');
+
+            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
+                const active = btn.dataset.mobileView === viewMode;
+                btn.className = active
+                    ? 'mobile-view-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white transition cursor-pointer'
+                    : 'mobile-view-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 transition cursor-pointer';
+            });
+
+            if (viewMode === '3d') {
+                panel3d.classList.remove('hidden');
+                panelDraw.classList.add('hidden');
+                main.classList.remove('grid-rows-[minmax(0,42%)_minmax(0,58%)]');
+                main.classList.add('grid-rows-1');
+            } else if (viewMode === 'draw') {
+                panel3d.classList.add('hidden');
+                panelDraw.classList.remove('hidden');
+                main.classList.remove('grid-rows-[minmax(0,42%)_minmax(0,58%)]');
+                main.classList.add('grid-rows-1');
+            } else {
+                panel3d.classList.remove('hidden');
+                panelDraw.classList.remove('hidden');
+                main.classList.add('grid-rows-[minmax(0,42%)_minmax(0,58%)]');
+                main.classList.remove('grid-rows-1');
+            }
+
+            setTimeout(handleResize, 30);
+        }
+
+        /* =========================================================================
+         * GENERACIÓN DE DIPLOMAS Y CERTIFICADOS EN PDF RASTERIZADOS (ANTI-FRAUDE)
+         * ========================================================================= */
         function drawAntiForgeryBackground(ctx, w, h) {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, w, h);
 
+            // Patrón procedural de líneas aleatorias en gris muy claro
             ctx.save();
-            const lineCount = 240;
-            for (let i = 0; i < lineCount; i++) {
+            for (let i = 0; i < 420; i++) {
                 const x1 = Math.random() * w;
                 const y1 = Math.random() * h;
                 const angle = Math.random() * Math.PI * 2;
-                const len = 140 + Math.random() * 520;
+                const len = 70 + Math.random() * 260;
                 const x2 = x1 + Math.cos(angle) * len;
                 const y2 = y1 + Math.sin(angle) * len;
-                const alpha = 0.18 + Math.random() * 0.18;
 
-                ctx.strokeStyle = `rgba(176, 186, 198, ${alpha.toFixed(2)})`;
-                ctx.lineWidth = 1 + Math.random() * 1.4;
+                ctx.strokeStyle = i % 2 === 0
+                    ? 'rgba(180, 188, 198, 0.22)'
+                    : 'rgba(203, 213, 225, 0.26)';
+                ctx.lineWidth = 1 + Math.random() * 1.1;
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
@@ -2445,575 +2670,350 @@
             ctx.restore();
         }
 
-        /**
-         * Dibuja una vista ortográfica (Alzado, Perfil Izquierdo o Planta) sobre el canvas del PDF.
-         */
-        function drawViewOnCanvas(ctx, viewDrawings, x, y, size, title, accentColor) {
-            const pad = 18;
-            const inner = size - pad * 2;
-            const cell = inner / GRID_SIZE;
-
+        function drawViewOnCanvas(ctx, drawingsView, ox, oy, size, label) {
             ctx.save();
-            ctx.fillStyle = accentColor;
-            ctx.beginPath();
-            ctx.arc(x + 10, y - 14, 6, 0, Math.PI * 2);
-            ctx.fill();
+            // Título de la vista
+            ctx.fillStyle = '#334155';
+            ctx.font = '700 20px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, ox + size / 2, oy - 12);
 
-            ctx.fillStyle = '#1e293b';
-            ctx.font = '700 22px Inter, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(title, x + 24, y - 14);
+            // Fondo blanco y cuadrícula tenue
+            ctx.fillStyle = 'rgba(255,255,255,0.92)';
+            ctx.fillRect(ox, oy, size, size);
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-            drawCanvasRoundRect(ctx, x, y, size, size, 14);
-            ctx.fill();
+            const step = size / GRID_SIZE;
             ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1.6;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([]);
             for (let i = 0; i <= GRID_SIZE; i++) {
-                const px = x + pad + i * cell;
-                const py = y + pad + i * cell;
                 ctx.beginPath();
-                ctx.moveTo(x + pad, py);
-                ctx.lineTo(x + pad + inner, py);
+                ctx.moveTo(ox, oy + i * step);
+                ctx.lineTo(ox + size, oy + i * step);
                 ctx.stroke();
 
                 ctx.beginPath();
-                ctx.moveTo(px, y + pad);
-                ctx.lineTo(px, y + pad + inner);
+                ctx.moveTo(ox + i * step, oy);
+                ctx.lineTo(ox + i * step, oy + size);
                 ctx.stroke();
             }
 
-            ctx.fillStyle = '#94a3b8';
-            for (let r = 0; r <= GRID_SIZE; r++) {
-                for (let c = 0; c <= GRID_SIZE; c++) {
-                    ctx.beginPath();
-                    ctx.arc(x + pad + c * cell, y + pad + r * cell, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            const map = viewDrawings || {};
-            for (const [segId, type] of Object.entries(map)) {
+            // Segmentos dibujados por el alumno
+            for (const [segId, type] of Object.entries(drawingsView || {})) {
                 const parts = segId.split('-');
                 const kind = parts[0];
                 const r = parseInt(parts[1], 10);
                 const c = parseInt(parts[2], 10);
 
                 let x1, y1, x2, y2;
-                if (kind === 'H') {
-                    x1 = x + pad + c * cell;
-                    y1 = y + pad + r * cell;
-                    x2 = x + pad + (c + 1) * cell;
-                    y2 = y1;
-                } else if (kind === 'V') {
-                    x1 = x + pad + c * cell;
-                    y1 = y + pad + r * cell;
-                    x2 = x1;
-                    y2 = y + pad + (r + 1) * cell;
-                } else if (kind === 'D1') {
-                    x1 = x + pad + c * cell;
-                    y1 = y + pad + (r + 1) * cell;
-                    x2 = x + pad + (c + 1) * cell;
-                    y2 = y + pad + r * cell;
-                } else if (kind === 'D2') {
-                    x1 = x + pad + c * cell;
-                    y1 = y + pad + r * cell;
-                    x2 = x + pad + (c + 1) * cell;
-                    y2 = y + pad + (r + 1) * cell;
-                } else {
-                    continue;
-                }
+                if (kind === 'H')  { x1 = c; y1 = r;     x2 = c + 1; y2 = r; }
+                if (kind === 'V')  { x1 = c; y1 = r;     x2 = c;     y2 = r + 1; }
+                if (kind === 'D2') { x1 = c; y1 = r;     x2 = c + 1; y2 = r + 1; }
+                if (kind === 'D1') { x1 = c; y1 = r + 1; x2 = c + 1; y2 = r; }
 
                 ctx.beginPath();
+                ctx.moveTo(ox + x1 * step, oy + y1 * step);
+                ctx.lineTo(ox + x2 * step, oy + y2 * step);
+
                 if (type === 'solid') {
-                    ctx.setLineDash([]);
                     ctx.strokeStyle = '#0f172a';
-                    ctx.lineWidth = 5.5;
+                    ctx.lineWidth = 4.5;
                     ctx.lineCap = 'round';
+                    ctx.setLineDash([]);
                 } else {
-                    ctx.setLineDash([12, 8]);
                     ctx.strokeStyle = '#334155';
-                    ctx.lineWidth = 4;
+                    ctx.lineWidth = 3.5;
                     ctx.lineCap = 'butt';
+                    ctx.setLineDash([10, 7]);
                 }
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
                 ctx.stroke();
             }
-
-            ctx.setLineDash([]);
             ctx.restore();
         }
 
-        /**
-         * Genera la portada rasterizada del Diploma Oficial o Certificado de Avance.
-         */
-        function renderDiplomaCoverCanvas({ isOfficial, userName, levelLabel, solvedCount, totalCount, dateStr, verificationCode }) {
+        function renderDiplomaCoverCanvas(isOfficial, levelLabel, solvedCount, totalCount, dateStr) {
+            const W = 1654, H = 2339; // A4 @ 200 DPI
             const canvas = document.createElement('canvas');
-            canvas.width = PDF_CANVAS_W;
-            canvas.height = PDF_CANVAS_H;
+            canvas.width = W;
+            canvas.height = H;
             const ctx = canvas.getContext('2d');
 
-            drawAntiForgeryBackground(ctx, PDF_CANVAS_W, PDF_CANVAS_H);
+            drawAntiForgeryBackground(ctx, W, H);
 
-            const primaryColor = isOfficial ? '#b45309' : '#3730a3';
-            const accentColor = isOfficial ? '#f59e0b' : '#4f46e5';
-            const softBg = isOfficial ? 'rgba(254, 243, 199, 0.72)' : 'rgba(224, 231, 255, 0.72)';
+            // Marcos ornamentales
+            const accent = isOfficial ? '#d97706' : '#2563eb';
+            ctx.strokeStyle = accent;
+            ctx.lineWidth = 14;
+            ctx.strokeRect(75, 75, W - 150, H - 150);
 
-            ctx.strokeStyle = primaryColor;
-            ctx.lineWidth = 10;
-            drawCanvasRoundRect(ctx, 70, 70, PDF_CANVAS_W - 140, PDF_CANVAS_H - 140, 36);
-            ctx.stroke();
-
-            ctx.strokeStyle = accentColor;
+            ctx.strokeStyle = '#94a3b8';
             ctx.lineWidth = 3;
-            drawCanvasRoundRect(ctx, 96, 96, PDF_CANVAS_W - 192, PDF_CANVAS_H - 192, 26);
-            ctx.stroke();
+            ctx.strokeRect(102, 102, W - 204, H - 204);
 
-            const cx = PDF_CANVAS_W / 2;
-            ctx.fillStyle = softBg;
-            ctx.beginPath();
-            ctx.arc(cx, 290, 96, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = accentColor;
-            ctx.lineWidth = 6;
-            ctx.stroke();
-
-            ctx.fillStyle = primaryColor;
-            ctx.font = '800 72px Inter, sans-serif';
+            // Cabecera institucional
+            ctx.fillStyle = accent;
+            ctx.font = '800 32px Inter, system-ui, sans-serif';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(isOfficial ? '★' : '3D', cx, 294);
+            ctx.fillText('TALLER DE VISTAS DIÉDRICAS 3D · SISTEMA EUROPEO (ISO-E)', W / 2, 260);
 
+            // Título principal
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 76px Inter, system-ui, sans-serif';
+            ctx.fillText(
+                isOfficial ? 'DIPLOMA OFICIAL DE SUPERACIÓN' : 'CERTIFICADO DE AVANCE',
+                W / 2,
+                430
+            );
+
+            // Línea divisoria
+            ctx.strokeStyle = accent;
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - 260, 485);
+            ctx.lineTo(W / 2 + 260, 485);
+            ctx.stroke();
+
+            // Texto de concesión
             ctx.fillStyle = '#475569';
-            ctx.font = '700 28px Inter, sans-serif';
-            ctx.fillText('TALLER DE VISTAS DIÉDRICAS 3D · SISTEMA EUROPEO (ISO-E)', cx, 455);
+            ctx.font = '500 36px Inter, system-ui, sans-serif';
+            ctx.fillText('Se otorga el presente documento acreditativo a:', W / 2, 620);
 
-            ctx.fillStyle = primaryColor;
-            ctx.font = '800 76px Inter, sans-serif';
-            ctx.fillText(isOfficial ? 'DIPLOMA OFICIAL' : 'CERTIFICADO DE AVANCE', cx, 565);
+            // Nombre del alumno
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 68px Inter, system-ui, sans-serif';
+            ctx.fillText(state.userName, W / 2, 740);
 
-            ctx.strokeStyle = accentColor;
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(280, 775);
+            ctx.lineTo(W - 280, 775);
+            ctx.stroke();
+
+            // Descripción del logro
+            ctx.fillStyle = '#334155';
+            ctx.font = '500 34px Inter, system-ui, sans-serif';
+            if (isOfficial) {
+                ctx.fillText('Por haber resuelto satisfactoriamente la totalidad de las 10 figuras', W / 2, 900);
+                ctx.fillText('de representación diédrica tridimensional correspondientes al nivel:', W / 2, 955);
+            } else {
+                ctx.fillText('Por el progreso acreditado en la representación de vistas diédricas', W / 2, 900);
+                ctx.fillText('tridimensionales (Alzado, Perfil Izquierdo y Planta) en el nivel:', W / 2, 955);
+            }
+
+            // Caja destacada de Nivel y Resultado
+            ctx.fillStyle = isOfficial ? 'rgba(254, 243, 199, 0.85)' : 'rgba(239, 246, 255, 0.85)';
+            ctx.strokeStyle = accent;
             ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.moveTo(cx - 280, 625);
-            ctx.lineTo(cx + 280, 625);
-            ctx.stroke();
-
-            ctx.fillStyle = '#334155';
-            ctx.font = '500 34px Inter, sans-serif';
-            ctx.fillText('Se certifica que el alumno / la alumna:', cx, 750);
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-            drawCanvasRoundRect(ctx, 180, 815, PDF_CANVAS_W - 360, 150, 24);
+            ctx.roundRect(330, 1040, W - 660, 290, 32);
             ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 3;
             ctx.stroke();
 
-            let nameFontSize = 64;
-            ctx.font = `800 ${nameFontSize}px Inter, sans-serif`;
-            while (ctx.measureText(userName).width > PDF_CANVAS_W - 430 && nameFontSize > 32) {
-                nameFontSize -= 4;
-                ctx.font = `800 ${nameFontSize}px Inter, sans-serif`;
-            }
+            ctx.fillStyle = accent;
+            ctx.font = '800 56px Inter, system-ui, sans-serif';
+            ctx.fillText(`NIVEL ${levelLabel.toUpperCase()}`, W / 2, 1155);
+
             ctx.fillStyle = '#0f172a';
-            ctx.fillText(userName, cx, 892);
+            ctx.font = '700 40px Inter, system-ui, sans-serif';
+            ctx.fillText(`Figuras resueltas: ${solvedCount} de ${totalCount} (${solvedCount * 10}%)`, W / 2, 1255);
 
-            ctx.fillStyle = '#334155';
-            ctx.font = '500 34px Inter, sans-serif';
-            const desc1 = isOfficial
-                ? 'ha superado satisfactoriamente todas las figuras de evaluación'
-                : 'ha completado correctamente hasta el momento las siguientes';
-            const desc2 = isOfficial
-                ? 'en representación de vistas ortográficas (Alzado, Perfil Izquierdo y Planta).'
-                : 'figuras de evaluación en representación de vistas ortográficas 3D.';
-            ctx.fillText(desc1, cx, 1075);
-            ctx.fillText(desc2, cx, 1128);
+            // Fecha y sello de verificación
+            ctx.fillStyle = '#475569';
+            ctx.font = '600 30px Inter, system-ui, sans-serif';
+            ctx.fillText(`Fecha de emisión: ${dateStr}`, W / 2, 1520);
 
-            const cardY = 1235;
-            const cardW = 580;
-            const cardH = 240;
-            const gap = 70;
-            const leftX = cx - cardW - gap / 2;
-            const rightX = cx + gap / 2;
-
-            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-            drawCanvasRoundRect(ctx, leftX, cardY, cardW, cardH, 24);
-            ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            const codeSeed = `${state.userName}|${levelLabel}|${solvedCount}|${dateStr}`;
+            let hash = 0;
+            for (let i = 0; i < codeSeed.length; i++) {
+                hash = ((hash << 5) - hash + codeSeed.charCodeAt(i)) | 0;
+            }
+            const verCode = `ISOE-${Math.abs(hash).toString(16).toUpperCase().padStart(8, '0')}`;
 
             ctx.fillStyle = '#64748b';
-            ctx.font = '700 26px Inter, sans-serif';
-            ctx.fillText('NIVEL DE DIFICULTAD', leftX + cardW / 2, cardY + 72);
-
-            ctx.fillStyle = primaryColor;
-            ctx.font = '800 56px Inter, sans-serif';
-            ctx.fillText(levelLabel.toUpperCase(), leftX + cardW / 2, cardY + 155);
-
-            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-            drawCanvasRoundRect(ctx, rightX, cardY, cardW, cardH, 24);
-            ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+            ctx.font = '600 24px monospace';
+            ctx.fillText(`Código de verificación: ${verCode}`, W / 2, 1585);
 
             ctx.fillStyle = '#64748b';
-            ctx.font = '700 26px Inter, sans-serif';
-            ctx.fillText('FIGURAS RESUELTAS', rightX + cardW / 2, cardY + 72);
+            ctx.font = '500 26px Inter, system-ui, sans-serif';
+            ctx.fillText(
+                solvedCount > 0
+                    ? 'En las páginas siguientes se adjuntan las figuras resueltas y sus vistas.'
+                    : 'Aún no se ha completado ninguna figura en este nivel.',
+                W / 2,
+                1760
+            );
 
-            ctx.fillStyle = solvedCount === totalCount ? '#059669' : '#0f172a';
-            ctx.font = '800 56px Inter, sans-serif';
-            ctx.fillText(`${solvedCount} / ${totalCount}`, rightX + cardW / 2, cardY + 155);
-
-            const barW = 1040;
-            const barH = 34;
-            const barX = cx - barW / 2;
-            const barY = 1580;
-
-            ctx.fillStyle = '#e2e8f0';
-            drawCanvasRoundRect(ctx, barX, barY, barW, barH, 17);
-            ctx.fill();
-
-            const pct = Math.max(0, Math.min(1, solvedCount / totalCount));
-            if (pct > 0) {
-                ctx.fillStyle = isOfficial ? '#f59e0b' : '#4f46e5';
-                drawCanvasRoundRect(ctx, barX, barY, Math.max(34, barW * pct), barH, 17);
-                ctx.fill();
-            }
-
-            ctx.fillStyle = '#475569';
-            ctx.font = '700 28px Inter, sans-serif';
-            ctx.fillText(`Progreso completado: ${Math.round(pct * 100)}%`, cx, barY + 72);
-
-            ctx.fillStyle = '#475569';
-            ctx.font = '500 26px Inter, sans-serif';
-            const annexNote = solvedCount > 0
-                ? 'En las páginas siguientes se adjuntan todas las piezas 3D resueltas y sus vistas dibujadas.'
-                : 'Aún no se ha completado ninguna figura en este nivel de evaluación.';
-            ctx.fillText(annexNote, cx, 1840);
-
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(160, 2030);
-            ctx.lineTo(PDF_CANVAS_W - 160, 2030);
-            ctx.stroke();
-
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#475569';
-            ctx.font = '600 26px Inter, sans-serif';
-            ctx.fillText(`Fecha de emisión: ${dateStr}`, 170, 2095);
-
-            ctx.textAlign = 'right';
-            ctx.fillText(`Código: ${verificationCode}`, PDF_CANVAS_W - 170, 2095);
-
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '500 22px Inter, sans-serif';
-            ctx.fillText('Documento rasterizado con trama antifalsificación · Taller de Vistas Diédricas 3D', cx, 2180);
-
-            return canvas.toDataURL('image/jpeg', 0.92);
+            return canvas;
         }
 
-        /**
-         * Genera una página anexa rasterizada con hasta 2 figuras resueltas.
-         */
-        async function renderSolvedFiguresPageCanvas({ items, pageNum, totalPages, userName, levelLabel }) {
-            const canvas = document.createElement('canvas');
-            canvas.width = PDF_CANVAS_W;
-            canvas.height = PDF_CANVAS_H;
-            const ctx = canvas.getContext('2d');
-
-            drawAntiForgeryBackground(ctx, PDF_CANVAS_W, PDF_CANVAS_H);
-
-            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-            drawCanvasRoundRect(ctx, 70, 60, PDF_CANVAS_W - 140, 105, 18);
-            ctx.fill();
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#0f172a';
-            ctx.font = '800 32px Inter, sans-serif';
-            ctx.fillText(`Anexo de Figuras Resueltas · Nivel ${levelLabel}`, 105, 98);
-
-            ctx.fillStyle = '#475569';
-            ctx.font = '600 23px Inter, sans-serif';
-            ctx.fillText(`Alumno/a: ${userName}`, 105, 138);
-
-            ctx.textAlign = 'right';
-            ctx.fillStyle = '#64748b';
-            ctx.font = '700 24px Inter, sans-serif';
-            ctx.fillText(`Página ${pageNum} de ${totalPages}`, PDF_CANVAS_W - 105, 114);
-
-            const cardH = 980;
-            const startY = 200;
-            const cardGap = 55;
-
-            for (let i = 0; i < items.length; i++) {
-                const entry = items[i];
-                const topY = startY + i * (cardH + cardGap);
-
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.84)';
-                drawCanvasRoundRect(ctx, 70, topY, PDF_CANVAS_W - 140, cardH, 24);
-                ctx.fill();
-                ctx.strokeStyle = '#94a3b8';
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-
-                const diffLabel = DIFFICULTY_META[entry.item.difficulty]?.label || entry.item.difficulty;
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#0f172a';
-                ctx.font = '800 34px Inter, sans-serif';
-                ctx.fillText(`Figura #${entry.index + 1}`, 110, topY + 56);
-
-                ctx.fillStyle = '#e0f2fe';
-                drawCanvasRoundRect(ctx, 310, topY + 32, 230, 46, 14);
-                ctx.fill();
-                ctx.fillStyle = '#0369a1';
-                ctx.font = '700 22px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(diffLabel, 425, topY + 56);
-
-                ctx.fillStyle = '#dcfce7';
-                drawCanvasRoundRect(ctx, PDF_CANVAS_W - 335, topY + 32, 225, 46, 14);
-                ctx.fill();
-                ctx.fillStyle = '#15803d';
-                ctx.font = '700 22px Inter, sans-serif';
-                ctx.fillText('✓ 100% Correcta', PDF_CANVAS_W - 222, topY + 56);
-
-                ctx.strokeStyle = '#e2e8f0';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(105, topY + 100);
-                ctx.lineTo(PDF_CANVAS_W - 105, topY + 100);
-                ctx.stroke();
-
-                const imgBoxX = 110;
-                const imgBoxY = topY + 150;
-                const imgBoxW = 540;
-                const imgBoxH = 465;
-
-                ctx.fillStyle = '#ffffff';
-                drawCanvasRoundRect(ctx, imgBoxX, imgBoxY, imgBoxW, imgBoxH, 18);
-                ctx.fill();
-                ctx.strokeStyle = '#cbd5e1';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                if (entry.thumbnail) {
-                    try {
-                        const img = await loadImageAsync(entry.thumbnail);
-                        ctx.drawImage(img, imgBoxX + 12, imgBoxY + 12, imgBoxW - 24, imgBoxH - 24);
-                    } catch (_) {}
-                }
-
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#475569';
-                ctx.font = '700 22px Inter, sans-serif';
-                ctx.fillText('Perspectiva Isométrica 3D', imgBoxX + imgBoxW / 2, imgBoxY + imgBoxH + 36);
-
-                const counts = countPieces(entry.item.grid);
-                const statsText = counts.ramps > 0
-                    ? `${counts.cubes} cubos · ${counts.ramps} rampas`
-                    : `${counts.cubes} cubos`;
-                ctx.fillStyle = '#64748b';
-                ctx.font = '500 21px Inter, sans-serif';
-                ctx.fillText(statsText, imgBoxX + imgBoxW / 2, imgBoxY + imgBoxH + 72);
-
-                const viewSize = 350;
-                const viewsBaseX = 720;
-                const viewsGapX = 65;
-                const viewsTopY = topY + 165;
-                const viewsBotY = topY + 575;
-
-                drawViewOnCanvas(ctx, entry.item.drawings?.alzado, viewsBaseX, viewsTopY, viewSize, 'ALZADO (+Z)', '#2563eb');
-                drawViewOnCanvas(ctx, entry.item.drawings?.perfil, viewsBaseX + viewSize + viewsGapX, viewsTopY, viewSize, 'PERFIL IZQ. (-X)', '#d97706');
-                drawViewOnCanvas(ctx, entry.item.drawings?.planta, viewsBaseX, viewsBotY, viewSize, 'PLANTA (+Y)', '#059669');
-
-                const legX = viewsBaseX + viewSize + viewsGapX;
-                const legY = viewsBotY;
-                ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-                drawCanvasRoundRect(ctx, legX, legY, viewSize, viewSize, 14);
-                ctx.fill();
-                ctx.strokeStyle = '#cbd5e1';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#334155';
-                ctx.font = '700 22px Inter, sans-serif';
-                ctx.fillText('Sistema Europeo', legX + 28, legY + 58);
-
-                ctx.strokeStyle = '#0f172a';
-                ctx.lineWidth = 5;
-                ctx.setLineDash([]);
-                ctx.beginPath();
-                ctx.moveTo(legX + 28, legY + 130);
-                ctx.lineTo(legX + 100, legY + 130);
-                ctx.stroke();
-                ctx.fillStyle = '#475569';
-                ctx.font = '500 20px Inter, sans-serif';
-                ctx.fillText('Arista visible', legX + 116, legY + 132);
-
-                ctx.strokeStyle = '#334155';
-                ctx.lineWidth = 4;
-                ctx.setLineDash([10, 7]);
-                ctx.beginPath();
-                ctx.moveTo(legX + 28, legY + 190);
-                ctx.lineTo(legX + 100, legY + 190);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.fillText('Arista oculta', legX + 116, legY + 192);
-
-                if (entry.item.solvedAt) {
-                    const d = new Date(entry.item.solvedAt);
-                    ctx.fillStyle = '#64748b';
-                    ctx.font = '500 18px Inter, sans-serif';
-                    ctx.fillText(`Resuelta: ${d.toLocaleDateString('es-ES')}`, legX + 28, legY + 292);
-                }
-            }
-
-            return canvas.toDataURL('image/jpeg', 0.91);
-        }
-
-        /**
-         * Genera y descarga el PDF oficial o de avance completamente rasterizado.
-         */
-        async function generateEvaluationPDF(isOfficial) {
-            try {
-                if (!window.jspdf || !window.jspdf.jsPDF) {
-                    showToast('La librería PDF no se ha cargado correctamente.');
-                    return;
-                }
-
-                const lvl = ensureEvalLevelInitialized(state.evalLevel);
-                const levelLabel = EVAL_BLUEPRINTS[state.evalLevel].label;
-                const solvedEntries = [];
-
-                lvl.sequence.forEach((item, idx) => {
-                    if (item.solved) {
-                        const thumb = item.thumbnail || captureIsometricThumbnail(item.grid);
-                        item.thumbnail = thumb;
-                        solvedEntries.push({ index: idx, item, thumbnail: thumb });
-                    }
-                });
-
-                const solvedCount = solvedEntries.length;
-                if (isOfficial && solvedCount < 10) {
-                    showToast('Debes completar las 10 figuras para descargar el Diploma Oficial.');
-                    return;
-                }
-
-                showToast('Generando PDF rasterizado...');
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const now = new Date();
-                const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const verificationCode = `VD3D-${state.evalLevel.slice(0, 3).toUpperCase()}-${solvedCount}DE10-${now.getTime().toString(36).slice(-5).toUpperCase()}`;
-
-                const coverUrl = renderDiplomaCoverCanvas({
-                    isOfficial,
-                    userName: state.userName || 'Alumno',
-                    levelLabel,
-                    solvedCount,
-                    totalCount: 10,
-                    dateStr,
-                    verificationCode
-                });
-                doc.addImage(coverUrl, 'JPEG', 0, 0, 210, 297);
-
-                const annexPages = Math.ceil(solvedEntries.length / 2);
-                const totalPages = 1 + annexPages;
-
-                for (let p = 0; p < annexPages; p++) {
-                    const pair = solvedEntries.slice(p * 2, p * 2 + 2);
-                    const pageUrl = await renderSolvedFiguresPageCanvas({
-                        items: pair,
-                        pageNum: p + 2,
-                        totalPages,
-                        userName: state.userName || 'Alumno',
-                        levelLabel
-                    });
-                    doc.addPage();
-                    doc.addImage(pageUrl, 'JPEG', 0, 0, 210, 297);
-                }
-
-                const safeName = (state.userName || 'Alumno')
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-zA-Z0-9]+/g, '_')
-                    .replace(/^_|_$/g, '');
-                const prefix = isOfficial ? 'Diploma_Oficial' : 'Diploma_Avance';
-                doc.save(`${prefix}_${levelLabel}_${safeName}.pdf`);
-                showToast('PDF descargado correctamente');
-            } catch (err) {
-                console.error('Error al generar el PDF:', err);
-                showToast('No se pudo generar el PDF.');
-            }
-        }
-
-        function setMobileView(viewMode) {
-            state.mobileView = viewMode;
-            const mainEl = document.getElementById('main-workspace');
-            const panel3D = document.getElementById('panel-3d');
-            const panelDraw = document.getElementById('panel-draw');
-
-            panel3D.classList.toggle('hidden', viewMode === 'draw');
-            panel3D.classList.toggle('lg:flex', viewMode === 'draw');
-            panelDraw.classList.toggle('hidden', viewMode === '3d');
-            panelDraw.classList.toggle('lg:flex', viewMode === '3d');
-
-            mainEl.classList.toggle('grid-rows-[minmax(0,42%)_minmax(0,58%)]', viewMode === 'both');
-            mainEl.classList.toggle('grid-rows-1', viewMode !== 'both');
-
-            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
-                const active = btn.dataset.mobileView === viewMode;
-                btn.classList.toggle('bg-slate-900', active);
-                btn.classList.toggle('text-white', active);
-                btn.classList.toggle('bg-slate-100', !active);
-                btn.classList.toggle('text-slate-600', !active);
+        function loadImageAsync(src) {
+            return new Promise((resolve) => {
+                if (!src) { resolve(null); return; }
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
             });
         }
 
+        async function renderSolvedFiguresPageCanvas(pairItems, pageIndex, totalPages, levelLabel) {
+            const W = 1654, H = 2339;
+            const canvas = document.createElement('canvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            drawAntiForgeryBackground(ctx, W, H);
+
+            // Marco y cabecera de anexo
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(75, 75, W - 150, H - 150);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 32px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`ANEXO DE FIGURAS RESUELTAS · NIVEL ${levelLabel.toUpperCase()}`, 120, 145);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 26px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`Alumno/a: ${state.userName} · Pág. ${pageIndex}/${totalPages}`, W - 120, 145);
+
+            // Renderizar hasta 2 figuras resueltas por página
+            for (let slot = 0; slot < pairItems.length; slot++) {
+                const { index, item } = pairItems[slot];
+                const boxY = 200 + slot * 1010;
+                const boxH = 950;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.roundRect(120, boxY, W - 240, boxH, 24);
+                ctx.fill();
+                ctx.stroke();
+
+                // Título de la figura
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '800 30px Inter, system-ui, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(
+                    `Figura #${index + 1} · Dificultad: ${DIFFICULTY_META[item.difficulty].label}`,
+                    160,
+                    boxY + 58
+                );
+
+                // Imagen 3D isométrica a la izquierda
+                const thumbSrc = item.thumbnail || renderThumbnailForGrid(item.grid);
+                const img = await loadImageAsync(thumbSrc);
+                const imgBoxX = 165, imgBoxY = boxY + 115, imgSize = 520;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.fillRect(imgBoxX, imgBoxY, imgSize, imgSize);
+                ctx.strokeRect(imgBoxX, imgBoxY, imgSize, imgSize);
+
+                if (img) {
+                    ctx.drawImage(img, imgBoxX + 10, imgBoxY + 10, imgSize - 20, imgSize - 20);
+                }
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '600 22px Inter, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Perspectiva Isométrica 3D', imgBoxX + imgSize / 2, imgBoxY + imgSize + 38);
+
+                // Tres vistas en Sistema Europeo a la derecha
+                const vSize = 310;
+                const gap = 55;
+                const vBaseX = 770;
+                const vBaseY = boxY + 135;
+
+                drawViewOnCanvas(ctx, item.drawings.alzado, vBaseX, vBaseY, vSize, 'ALZADO');
+                drawViewOnCanvas(ctx, item.drawings.perfil, vBaseX + vSize + gap, vBaseY, vSize, 'PERFIL IZQ.');
+                drawViewOnCanvas(ctx, item.drawings.planta, vBaseX, vBaseY + vSize + 75, vSize, 'PLANTA');
+            }
+
+            return canvas;
+        }
+
+        async function generateEvaluationPDF(isOfficial) {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                showToast('Error al cargar el generador de PDF');
+                return;
+            }
+
+            showToast('Generando documento PDF rasterizado...');
+            const lvl = state.evalData[state.evalLevel];
+            const levelLabel = EVAL_BLUEPRINTS[state.evalLevel].label;
+            const solvedItems = lvl.sequence
+                .map((item, index) => ({ item, index }))
+                .filter(entry => entry.item.solved);
+
+            const dateStr = new Date().toLocaleDateString('es-ES', {
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            // Portada rasterizada
+            const coverCanvas = renderDiplomaCoverCanvas(
+                isOfficial,
+                levelLabel,
+                solvedItems.length,
+                lvl.sequence.length,
+                dateStr
+            );
+            doc.addImage(coverCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+
+            // Páginas anexas con las figuras resueltas (2 por página)
+            const totalAnnexPages = Math.ceil(solvedItems.length / 2);
+            for (let p = 0; p < totalAnnexPages; p++) {
+                const slice = solvedItems.slice(p * 2, p * 2 + 2);
+                const pageCanvas = await renderSolvedFiguresPageCanvas(slice, p + 1, totalAnnexPages, levelLabel);
+                doc.addPage();
+                doc.addImage(pageCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+            }
+
+            const safeUser = (state.userName || 'alumno')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9_-]+/g, '_');
+            const prefix = isOfficial ? 'Diploma_Oficial' : 'Certificado_Avance';
+            doc.save(`${prefix}_${levelLabel}_${safeUser}.pdf`);
+            showToast('PDF descargado correctamente');
+        }
+
         /* =========================================================================
-         * ENLACE DE EVENTOS DE INTERFAZ Y ARRANQUE
+         * INICIALIZACIÓN Y EVENTOS DE INTERFAZ
          * ========================================================================= */
         function bindUIEvents() {
+            // Login
             document.getElementById('login-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const input = document.getElementById('student-name-input');
-                const name = input.value.trim();
-                if (name.length < 2) {
+                const val = input.value.trim();
+                if (!val) {
                     document.getElementById('login-error').classList.remove('hidden');
                     input.focus();
                     return;
                 }
-                document.getElementById('login-error').classList.add('hidden');
-                restoreUserSession(name);
-                showToast(`¡Bienvenido/a, ${name}!`);
+                restoreUserSession(val);
             });
 
+            // Logout
             document.getElementById('btn-logout').addEventListener('click', () => {
                 openConfirmModal(
-                    'Cerrar sesión de alumno',
-                    `¿Quieres cerrar la sesión de "${state.userName}"? Tu avance quedará guardado localmente en este dispositivo por si vuelves a entrar con el mismo nombre.`,
                     'Cerrar sesión',
-                    () => logoutUser()
+                    `¿Deseas cerrar la sesión de ${state.userName}? Tu progreso queda guardado automáticamente en este dispositivo.`,
+                    'Cerrar sesión',
+                    logoutUser
                 );
             });
 
+            // Modal de confirmación
             document.getElementById('confirm-cancel').addEventListener('click', closeConfirmModal);
             document.getElementById('confirm-ok').addEventListener('click', () => {
                 const cb = confirmCallback;
@@ -3021,121 +3021,158 @@
                 if (cb) cb();
             });
 
-            document.getElementById('btn-congrats-pdf').addEventListener('click', () => generateEvaluationPDF(true));
+            // Modal de enhorabuena
             document.getElementById('btn-congrats-close').addEventListener('click', () => {
                 document.getElementById('congrats-modal').classList.add('hidden');
             });
-
-            document.getElementById('tab-practice').addEventListener('click', () => {
-                if (state.mode !== 'practice') switchMode('practice');
-            });
-            document.getElementById('tab-eval').addEventListener('click', () => {
-                if (state.mode !== 'eval') switchMode('eval');
+            document.getElementById('btn-congrats-pdf').addEventListener('click', () => {
+                document.getElementById('congrats-modal').classList.add('hidden');
+                generateEvaluationPDF(true);
             });
 
+            // Modal .sav (Guardar / Cargar avance cifrado)
+            document.getElementById('btn-sav-manager').addEventListener('click', openSavModal);
+            document.getElementById('btn-sav-close').addEventListener('click', closeSavModal);
+            document.getElementById('btn-sav-download').addEventListener('click', handleDownloadSav);
+            document.getElementById('btn-sav-upload').addEventListener('click', () => {
+                const inp = document.getElementById('sav-file-input');
+                inp.value = '';
+                inp.click();
+            });
+            document.getElementById('sav-file-input').addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUploadSavFile(file);
+            });
+
+            // Selector de modo Práctica / Evaluación
+            document.getElementById('tab-practice').addEventListener('click', () => switchMode('practice'));
+            document.getElementById('tab-eval').addEventListener('click', () => switchMode('eval'));
+
+            // Controles de Práctica
             document.getElementById('practice-diff-select').addEventListener('change', (e) => {
                 state.practiceDifficulty = e.target.value;
-                startPracticeFigure();
                 saveStateToStorage();
-                showToast(`Nivel de práctica: ${DIFFICULTY_META[state.practiceDifficulty].label}`);
+                startNewPracticeFigure();
+            });
+            document.getElementById('btn-export-stl').addEventListener('click', exportCurrentFigureSTL);
+            document.getElementById('btn-new-figure').addEventListener('click', startNewPracticeFigure);
+            document.getElementById('btn-check-practice').addEventListener('click', checkPracticeDrawing);
+            document.getElementById('btn-solution').addEventListener('click', () => {
+                state.showSolution = !state.showSolution;
+                document.getElementById('btn-solution-text').textContent =
+                    state.showSolution ? 'Ocultar solución' : 'Ver solución';
+                renderAllViews();
             });
 
-            document.getElementById('btn-new-figure').addEventListener('click', () => {
-                startPracticeFigure();
-                showToast(`Nueva figura (${DIFFICULTY_META[state.practiceDifficulty].label})`);
-            });
-
-            document.getElementById('btn-check-practice').addEventListener('click', checkDrawing);
-            document.getElementById('btn-solution').addEventListener('click', toggleSolution);
-
+            // Controles de Evaluación
             document.querySelectorAll('.eval-tab').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const nextLevel = btn.dataset.evalLevel;
-                    if (nextLevel === state.evalLevel) return;
                     saveStateToStorage();
-                    state.evalLevel = nextLevel;
-                    loadCurrentEvalFigure();
+                    state.evalLevel = btn.dataset.evalLevel;
+                    ensureEvalLevelInitialized(state.evalLevel);
+                    loadEvalStep(state.evalData[state.evalLevel].currentIndex);
                     saveStateToStorage();
                 });
             });
 
-            document.getElementById('btn-check-eval').addEventListener('click', checkDrawing);
-            document.getElementById('btn-next-eval').addEventListener('click', advanceEvalStep);
+            document.getElementById('btn-reroll-eval').addEventListener('click', rerollCurrentEvalFigure);
+            document.getElementById('btn-check-eval').addEventListener('click', checkEvaluationDrawing);
+            document.getElementById('btn-next-eval').addEventListener('click', () => {
+                const lvl = state.evalData[state.evalLevel];
+                if (lvl && lvl.currentIndex < 9 && lvl.sequence[lvl.currentIndex].solved) {
+                    loadEvalStep(lvl.currentIndex + 1);
+                    saveStateToStorage();
+                }
+            });
+
             document.getElementById('btn-pdf-progress').addEventListener('click', () => generateEvaluationPDF(false));
             document.getElementById('btn-pdf-official').addEventListener('click', () => generateEvaluationPDF(true));
 
             document.getElementById('btn-reset-eval').addEventListener('click', () => {
-                const label = EVAL_BLUEPRINTS[state.evalLevel].label;
+                const levelName = EVAL_BLUEPRINTS[state.evalLevel].label;
                 openConfirmModal(
-                    `Reiniciar nivel ${label}`,
-                    `Se borrará tu avance actual en el nivel ${label} y se generarán 10 figuras aleatorias nuevas. ¿Deseas continuar?`,
-                    'Sí, reiniciar',
+                    `Reiniciar nivel ${levelName}`,
+                    'Se borrará el avance actual de este nivel y se generarán 10 figuras nuevas. ¿Deseas continuar?',
+                    'Reiniciar nivel',
                     () => {
                         state.evalData[state.evalLevel] = null;
-                        loadCurrentEvalFigure();
+                        ensureEvalLevelInitialized(state.evalLevel);
+                        loadEvalStep(0);
                         saveStateToStorage();
-                        showToast(`Nivel ${label} reiniciado`);
+                        showToast(`Nivel ${levelName} reiniciado`);
                     }
                 );
             });
 
-            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
-                btn.addEventListener('click', () => setMobileView(btn.dataset.mobileView));
-            });
-
+            // Herramientas de dibujo
             document.querySelectorAll('.tool-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
                     state.tool = btn.dataset.tool;
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b === btn));
                 });
             });
 
-            document.querySelectorAll('.cam-btn').forEach(btn => {
-                btn.addEventListener('click', () => animateCameraTo(btn.dataset.cam));
+            document.getElementById('btn-undo').addEventListener('click', () => {
+                if (state.history.length === 0) return;
+                state.drawings = state.history.pop();
+                updateUndoButton();
+                clearCheckFeedback();
+                renderAllViews();
+                saveStateToStorage();
             });
 
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                pushHistorySnapshot();
+                state.drawings = createEmptyDrawings();
+                clearCheckFeedback();
+                renderAllViews();
+                saveStateToStorage();
+            });
+
+            document.getElementById('btn-clear-check').addEventListener('click', clearCheckFeedback);
+
+            // Atajo teclado Ctrl+Z / Cmd+Z
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                    e.preventDefault();
+                    document.getElementById('btn-undo').click();
+                }
+            });
+
+            // Controles visor 3D
             document.getElementById('btn-unit-grid').addEventListener('click', (e) => {
                 state.showUnitGrid = !state.showUnitGrid;
                 if (unitGridLines) unitGridLines.visible = state.showUnitGrid;
-                const btn = e.currentTarget;
-                btn.classList.toggle('bg-blue-50', state.showUnitGrid);
-                btn.classList.toggle('border-blue-300', state.showUnitGrid);
-                btn.classList.toggle('text-blue-700', state.showUnitGrid);
+                e.currentTarget.classList.toggle('bg-blue-50', state.showUnitGrid);
+                e.currentTarget.classList.toggle('text-blue-700', state.showUnitGrid);
+                e.currentTarget.classList.toggle('border-blue-300', state.showUnitGrid);
             });
 
-            document.getElementById('btn-undo').addEventListener('click', undo);
-            document.getElementById('btn-clear').addEventListener('click', clearAllDrawings);
-            document.getElementById('btn-clear-check').addEventListener('click', clearCheckOverlay);
+            document.querySelectorAll('.cam-btn').forEach(btn => {
+                btn.addEventListener('click', () => setCameraPreset(btn.dataset.cam));
+            });
 
-            window.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-                    e.preventDefault();
-                    undo();
-                }
+            // Conmutador de vistas en móvil/tablet
+            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
+                btn.addEventListener('click', () => setMobileView(btn.dataset.mobileView));
             });
         }
 
-        window.onload = function () {
-            try {
-                buildDrawingGrids();
-                init3D();
-                bindUIEvents();
-                animateLoop();
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeScene();
+            buildDraftingBoards();
+            bindUIEvents();
 
-                const root = loadStorageRoot();
-                if (root.activeUser) {
-                    restoreUserSession(root.activeUser);
-                } else {
-                    startPracticeFigure();
-                    document.getElementById('login-modal').classList.remove('hidden');
-                    setTimeout(() => document.getElementById('student-name-input').focus(), 100);
-                }
-            } catch (err) {
-                console.error('Error al inicializar:', err);
-                showToast('Error al inicializar la aplicación 3D');
+            const root = loadStorageRoot();
+            if (root.activeUser) {
+                restoreUserSession(root.activeUser);
+            } else {
+                startNewPracticeFigure();
+                document.getElementById('login-modal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('student-name-input').focus(), 80);
             }
-        };
+        });
     </script>
 </body>
 </html>
