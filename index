@@ -1,0 +1,3141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Taller de Vistas Diédricas 3D — Aprendizaje y Evaluación</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- jsPDF para generación de diplomas y certificados en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Fuente Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Importmap para Three.js moderno (v0.160.0) desde jsDelivr -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <style>
+        html, body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            height: 100vh;
+            height: 100dvh;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Fondo sutil de mesa de dibujo técnico */
+        .drafting-bg {
+            background-color: #f8fafc;
+            background-image:
+                linear-gradient(to right, rgba(203, 213, 225, 0.35) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(203, 213, 225, 0.35) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Estilos de líneas SVG */
+        .seg-line {
+            pointer-events: none;
+            stroke-linecap: round;
+            transition: stroke 0.14s ease, stroke-width 0.14s ease;
+        }
+
+        .seg-solid {
+            stroke: #0f172a;
+            stroke-width: 4.5;
+        }
+
+        .seg-dashed {
+            stroke: #334155;
+            stroke-width: 3.4;
+            stroke-dasharray: 8 6;
+            stroke-linecap: butt;
+        }
+
+        /* Corrección / verificación */
+        .seg-check-ok {
+            stroke: #16a34a !important;
+        }
+
+        .seg-check-wrong {
+            stroke: #dc2626 !important;
+        }
+
+        .seg-check-missing {
+            stroke: #f59e0b;
+            stroke-width: 3.8;
+            stroke-linecap: round;
+            opacity: 0.92;
+            pointer-events: none;
+        }
+
+        /* Solución superpuesta (solo en modo Práctica) */
+        .seg-solution-solid {
+            stroke: #2563eb;
+            stroke-width: 4.5;
+            stroke-linecap: round;
+            opacity: 0.72;
+            pointer-events: none;
+        }
+
+        .seg-solution-dashed {
+            stroke: #2563eb;
+            stroke-width: 3.4;
+            stroke-dasharray: 8 6;
+            stroke-linecap: butt;
+            opacity: 0.72;
+            pointer-events: none;
+        }
+
+        /* Contenedor canvas 3D con soporte táctil */
+        #viewport-3d canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
+            touch-action: none;
+        }
+
+        /* SVG interactivo sin scroll accidental */
+        .draft-svg {
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        /* Botón activo de herramienta */
+        .tool-btn.active {
+            background-color: #1e293b;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+        }
+
+        .tool-btn.active svg {
+            color: #ffffff;
+        }
+
+        /* Pestaña de modo activa */
+        .mode-tab.active {
+            background-color: #ffffff;
+            color: #1d4ed8;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+
+        /* Nivel de evaluación activo */
+        .eval-tab.active {
+            background-color: #1e293b;
+            color: #ffffff;
+            border-color: #0f172a;
+        }
+
+        /* Animación suave de modales */
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-card {
+            animation: modalPop 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden no-select">
+
+    <!-- ===================================================================== -->
+    <!-- MODAL DE BIENVENIDA / INICIO DE SESIÓN OBLIGATORIO                    -->
+    <!-- ===================================================================== -->
+    <div id="login-modal" class="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="modal-card bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-8">
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md mb-4">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900">Taller de Vistas Diédricas 3D</h1>
+                <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Sistema Europeo · Plataforma de Aprendizaje y Evaluación con cubos y rampas 3×3×3.
+                </p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="student-name-input" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Nombre completo del alumno/a
+                    </label>
+                    <input
+                        id="student-name-input"
+                        type="text"
+                        maxlength="60"
+                        autocomplete="name"
+                        placeholder="Ej. Laura Martínez Gómez"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 outline-none text-slate-900 font-medium text-sm sm:text-base transition select-text"
+                        required
+                    >
+                    <p id="login-error" class="text-xs text-rose-600 font-medium mt-1.5 hidden">
+                        Por favor, introduce tu nombre completo para comenzar.
+                    </p>
+                </div>
+
+                <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3 text-xs text-blue-900/85 space-y-1">
+                    <p><strong>• Guardado automático:</strong> tu avance y tus diplomas se guardan automáticamente en este dispositivo.</p>
+                    <p><strong>• Nombre bloqueado:</strong> aparecerá en tus certificados PDF y solo podrá cambiarse cerrando sesión.</p>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-sm sm:text-base shadow-md transition cursor-pointer">
+                    Comenzar sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL GENÉRICO DE CONFIRMACIÓN (SIN alert/confirm NATIVOS)            -->
+    <!-- ===================================================================== -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="modal-card bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6">
+            <h3 id="confirm-title" class="text-lg font-bold text-slate-900 mb-2">Confirmar acción</h3>
+            <p id="confirm-message" class="text-sm text-slate-600 leading-relaxed mb-5"></p>
+            <div class="flex items-center justify-end gap-2.5">
+                <button id="confirm-cancel" class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="confirm-ok" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL DE ENHORABUENA AL COMPLETAR EVALUACIÓN (10/10)                  -->
+    <!-- ===================================================================== -->
+    <div id="congrats-modal" class="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="modal-card bg-white rounded-3xl shadow-2xl border border-amber-200 max-w-md w-full p-6 sm:p-8 text-center">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 shadow-inner">
+                <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="6"></circle>
+                    <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+                </svg>
+            </div>
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-2">
+                ¡Nivel Superado · 10 / 10!
+            </span>
+            <h2 class="text-2xl font-extrabold text-slate-900">¡Enhorabuena, <span id="congrats-name"></span>!</h2>
+            <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+                Has completado correctamente las 10 figuras del nivel <strong id="congrats-level" class="text-slate-900"></strong>. Ya puedes descargar tu Diploma Oficial en PDF con todas tus piezas y vistas resueltas.
+            </p>
+            <div class="mt-6 flex flex-col gap-2.5">
+                <button id="btn-congrats-pdf" class="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar Diploma Oficial (PDF)</span>
+                </button>
+                <button id="btn-congrats-close" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN Y USUARIO                                -->
+    <!-- ===================================================================== -->
+    <header class="bg-white border-b border-slate-200 shrink-0 z-30 shadow-sm">
+        <div class="max-w-[1640px] mx-auto px-3 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
+            <!-- Marca -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <div class="leading-tight">
+                    <h1 class="text-sm sm:text-base font-extrabold text-slate-900">Vistas Diédricas 3D</h1>
+                    <p class="text-[11px] text-slate-500 hidden md:block">Sistema Europeo · Cubos y Rampas 3×3×3</p>
+                </div>
+            </div>
+
+            <!-- Selector de Modo: PRÁCTICA | EVALUACIÓN -->
+            <nav class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80" aria-label="Modo de trabajo">
+                <button id="tab-practice" class="mode-tab active px-3.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 transition cursor-pointer flex items-center gap-1.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>Práctica</span>
+                </button>
+                <button id="tab-eval" class="mode-tab px-3.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-600 transition cursor-pointer flex items-center gap-1.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>Evaluación</span>
+                </button>
+            </nav>
+
+            <!-- Perfil del Alumno (bloqueado) y Cerrar Sesión -->
+            <div class="flex items-center gap-2 ml-auto sm:ml-0">
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 max-w-[170px] sm:max-w-[230px]" title="Nombre del alumno activo (bloqueado durante la sesión)">
+                    <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0" id="header-user-avatar">A</span>
+                    <span id="header-user-name" class="text-xs sm:text-sm font-semibold truncate">Alumno</span>
+                </div>
+                <button id="btn-logout" title="Cerrar sesión y cambiar de alumno" class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span class="hidden sm:inline">Cerrar sesión</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SUB-BARRA CONTEXTUAL: CONTROLES DE PRÁCTICA -->
+        <div id="bar-practice" class="bg-slate-50/90 border-t border-slate-200/80">
+            <div class="max-w-[1640px] mx-auto px-3 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
+                <!-- Selector de 5 dificultades -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline">Dificultad:</span>
+                    <select id="practice-diff-select" class="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs sm:text-sm font-semibold shadow-sm focus:border-blue-500 outline-none cursor-pointer">
+                        <option value="muy_facil">1 · Muy fácil (sin rampas)</option>
+                        <option value="facil">2 · Fácil</option>
+                        <option value="medio" selected>3 · Medio</option>
+                        <option value="dificil">4 · Difícil</option>
+                        <option value="muy_dificil">5 · Muy difícil</option>
+                    </select>
+                </div>
+
+                <!-- Acciones de práctica -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="btn-new-figure" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        <span>Nueva figura</span>
+                    </button>
+
+                    <button id="btn-check-practice" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>Comprobar</span>
+                    </button>
+
+                    <button id="btn-solution" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-700 border border-slate-300 text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span id="btn-solution-text">Ver solución</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUB-BARRA CONTEXTUAL: CONTROLES DE EVALUACIÓN -->
+        <div id="bar-eval" class="bg-slate-50/95 border-t border-slate-200/80 hidden">
+            <div class="max-w-[1640px] mx-auto px-3 sm:px-4 py-1.5 space-y-1.5">
+                <!-- Fila 1: Selector de nivel + Acciones PDF + Reiniciar -->
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button data-eval-level="basico" class="eval-tab active px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
+                            <span>Básico</span>
+                            <span id="badge-eval-basico" class="px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-800 text-[10px]">0/10</span>
+                        </button>
+                        <button data-eval-level="intermedio" class="eval-tab px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
+                            <span>Intermedio</span>
+                            <span id="badge-eval-intermedio" class="px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-800 text-[10px]">0/10</span>
+                        </button>
+                        <button data-eval-level="avanzado" class="eval-tab px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
+                            <span>Avanzado</span>
+                            <span id="badge-eval-avanzado" class="px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-800 text-[10px]">0/10</span>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Botón Diploma Oficial (visible al completar 10/10) -->
+                        <button id="btn-pdf-official" class="hidden inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer animate-pulse">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="8" r="6"></circle>
+                                <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+                            </svg>
+                            <span>Descargar Diploma Oficial (PDF)</span>
+                        </button>
+
+                        <!-- Botón Diploma de Avance (siempre disponible) -->
+                        <button id="btn-pdf-progress" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <polyline points="9 15 12 18 15 15"></polyline>
+                            </svg>
+                            <span>Diploma de avance (PDF)</span>
+                        </button>
+
+                        <button id="btn-reset-eval" title="Reiniciar este nivel de evaluación" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 text-xs font-semibold transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Reiniciar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fila 2: Progreso 1..10 + Comprobar + Siguiente figura -->
+                <div class="flex flex-wrap items-center justify-between gap-2 bg-white rounded-xl border border-slate-200 px-3 py-1.5">
+                    <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[220px]">
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-900" id="eval-figure-label">Figura 1 de 10 · Muy fácil</div>
+                            <div class="w-40 sm:w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
+                                <div id="eval-progress-bar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <!-- Mini indicadores 1..10 -->
+                        <div id="eval-step-pills" class="flex flex-wrap items-center gap-1"></div>
+                    </div>
+
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button id="btn-check-eval" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Comprobar</span>
+                        </button>
+
+                        <button id="btn-next-eval" disabled class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer">
+                            <span id="btn-next-eval-text">Siguiente figura →</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONMUTADOR MÓVIL (SOLO PANTALLAS < 1024px) -->
+        <div class="lg:hidden bg-white border-t border-slate-200 px-3 py-1.5 flex items-center justify-center gap-1.5">
+            <button data-mobile-view="both" class="mobile-view-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white transition cursor-pointer">
+                3D + Dibujo
+            </button>
+            <button data-mobile-view="3d" class="mobile-view-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 transition cursor-pointer">
+                Solo Visor 3D
+            </button>
+            <button data-mobile-view="draw" class="mobile-view-btn px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 transition cursor-pointer">
+                Solo Vistas
+            </button>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- CONTENIDO PRINCIPAL RESPONSIVO (AJUSTADO AL 100% DEL VIEWPORT)        -->
+    <!-- ===================================================================== -->
+    <main id="main-workspace" class="flex-1 min-h-0 max-w-[1640px] w-full mx-auto p-2 sm:p-2.5 grid grid-cols-1 grid-rows-[minmax(0,42%)_minmax(0,58%)] lg:grid-cols-12 lg:grid-rows-1 gap-2.5 items-stretch overflow-hidden">
+
+        <!-- COLUMNA IZQUIERDA: VISOR 3D INTERACTIVO (SIN SOMBRAS) -->
+        <section id="panel-3d" class="lg:col-span-5 flex flex-col min-h-0 h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <!-- Cabecera del visor -->
+            <div class="px-3 py-1.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <h2 class="text-xs sm:text-sm font-bold text-slate-800">Visor 3D Interactivo</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-unit-grid" title="Mostrar u ocultar líneas guía de unidades 1×1×1" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
+                        </svg>
+                        <span>Guía 1×1×1</span>
+                    </button>
+                    <span id="piece-stats-badge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
+                        — piezas
+                    </span>
+                </div>
+            </div>
+
+            <!-- Canvas 3D -->
+            <div id="viewport-3d" class="relative flex-1 min-h-0 w-full bg-gradient-to-b from-slate-50 to-slate-200/60">
+                <div class="absolute top-2 left-2 z-10 pointer-events-none bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-xl px-2.5 py-1 text-[11px] text-slate-600 shadow-sm">
+                    Arrastra para girar · Pellizca/rueda para zoom
+                </div>
+            </div>
+
+            <!-- Barra de cámaras rápidas -->
+            <div class="p-2 border-t border-slate-100 bg-white flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <span class="text-xs font-semibold text-slate-500 hidden sm:inline">Vistas rápidas:</span>
+                <div class="grid grid-cols-4 sm:flex items-center gap-1.5 w-full sm:w-auto">
+                    <button data-cam="iso" class="cam-btn px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 transition cursor-pointer text-center">
+                        Isométrica
+                    </button>
+                    <button data-cam="alzado" class="cam-btn px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 transition cursor-pointer text-center">
+                        Alzado
+                    </button>
+                    <button data-cam="planta" class="cam-btn px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 transition cursor-pointer text-center">
+                        Planta
+                    </button>
+                    <button data-cam="perfil" class="cam-btn px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 transition cursor-pointer text-center">
+                        Perfil
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUMNA DERECHA: HERRAMIENTAS Y MESA DE DIBUJO (SISTEMA EUROPEO) -->
+        <section id="panel-draw" class="lg:col-span-7 flex flex-col min-h-0 h-full bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+            <!-- Barra de herramientas de dibujo -->
+            <div class="px-3 py-1.5 border-b border-slate-200 bg-slate-50/80 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex flex-wrap items-center gap-1.5" role="toolbar" aria-label="Herramientas de dibujo">
+                    <button id="tool-solid" data-tool="solid" class="tool-btn active inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer hover:bg-slate-50">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                        </svg>
+                        <span>Continua</span>
+                    </button>
+
+                    <button id="tool-dashed" data-tool="dashed" class="tool-btn inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer hover:bg-slate-50">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-dasharray="4 3">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                        </svg>
+                        <span>Discontinua</span>
+                    </button>
+
+                    <button id="tool-eraser" data-tool="eraser" class="tool-btn inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer hover:bg-slate-50">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20"></path>
+                        </svg>
+                        <span>Borrador</span>
+                    </button>
+                </div>
+
+                <!-- Acciones de edición -->
+                <div class="flex items-center gap-1.5">
+                    <button id="btn-undo" title="Deshacer (Ctrl+Z)" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-medium transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7v6h6"></path>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Deshacer</span>
+                    </button>
+
+                    <button id="btn-clear" title="Limpiar todas las vistas" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs sm:text-sm font-medium transition cursor-pointer">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                            <path d="M10 11v6"></path>
+                            <path d="M14 11v6"></path>
+                        </svg>
+                        <span>Limpiar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instrucción rápida -->
+            <div class="px-3 py-1 bg-blue-50/60 border-b border-blue-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-blue-900/85 shrink-0">
+                <span><strong>Cómo dibujar:</strong> Arrastra pasando por los <strong>vértices</strong>; las líneas se trazan al instante sin soltar. Usa <strong>Borrador</strong> o clic derecho para borrar.</span>
+                <span class="font-bold text-blue-700 hidden sm:inline">Sistema Europeo (ISO-E)</span>
+            </div>
+
+            <!-- Banner de figura completada en Evaluación -->
+            <div id="eval-solved-banner" class="hidden px-3 py-1.5 bg-emerald-50 border-b border-emerald-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <div class="flex items-center gap-2 text-emerald-800 text-xs font-bold">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>¡Figura 100% correcta y guardada! Ya puedes pasar a la siguiente.</span>
+                </div>
+            </div>
+
+            <!-- MESA DE DIBUJO: 3 VISTAS + PANEL DE RESULTADO (SIEMPRE VISIBLE EN VENTANA) -->
+            <div class="flex-1 min-h-0 p-2 sm:p-3 drafting-bg flex items-center justify-center overflow-hidden">
+                <div class="w-full h-full max-w-[740px] grid grid-cols-2 grid-rows-2 gap-2 sm:gap-3 min-h-0">
+
+                    <!-- 1. ALZADO (Arriba-Izquierda) -->
+                    <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm p-1.5 sm:p-2.5 flex flex-col items-center min-h-0 min-w-0 overflow-hidden">
+                        <div class="w-full flex items-center justify-between mb-1 shrink-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                                <h3 class="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-slate-800">Alzado</h3>
+                            </div>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 font-medium hidden sm:inline">Frontal (+Z)</span>
+                        </div>
+                        <div id="grid-alzado" class="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"></div>
+                    </div>
+
+                    <!-- 2. PERFIL IZQUIERDO (Arriba-Derecha) -->
+                    <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm p-1.5 sm:p-2.5 flex flex-col items-center min-h-0 min-w-0 overflow-hidden">
+                        <div class="w-full flex items-center justify-between mb-1 shrink-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <h3 class="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-slate-800">Perfil Izq.</h3>
+                            </div>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 font-medium hidden sm:inline">Izquierda (-X)</span>
+                        </div>
+                        <div id="grid-perfil" class="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"></div>
+                    </div>
+
+                    <!-- 3. PLANTA (Abajo-Izquierda) -->
+                    <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm p-1.5 sm:p-2.5 flex flex-col items-center min-h-0 min-w-0 overflow-hidden">
+                        <div class="w-full flex items-center justify-between mb-1 shrink-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                <h3 class="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-slate-800">Planta</h3>
+                            </div>
+                            <span class="text-[10px] sm:text-[11px] text-slate-400 font-medium hidden sm:inline">Superior (+Y)</span>
+                        </div>
+                        <div id="grid-planta" class="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden"></div>
+                    </div>
+
+                    <!-- 4. PANEL DE RESULTADOS Y LEYENDA (Abajo-Derecha) -->
+                    <div class="bg-white/95 rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm p-2.5 sm:p-3 flex flex-col justify-between min-h-0 min-w-0 overflow-y-auto">
+                        <div id="feedback-panel">
+                            <h3 class="text-[11px] sm:text-xs font-bold tracking-wider uppercase text-slate-500 mb-1.5">Evaluación y Guía</h3>
+                            <p id="feedback-default" class="text-[11px] sm:text-xs text-slate-600 leading-snug">
+                                Pulsa sobre un <strong>vértice</strong> y arrastra pasando por los siguientes para trazar aristas visibles (<strong>continua</strong>) u ocultas (<strong>discontinua</strong>), incluyendo <strong>diagonales</strong>.
+                            </p>
+
+                            <!-- Aviso sin pistas para errores en modo Evaluación -->
+                            <div id="feedback-eval-error" class="hidden rounded-xl bg-rose-50 border border-rose-200 p-2.5 space-y-1.5">
+                                <div class="flex items-start gap-2 text-rose-800">
+                                    <svg class="w-4 h-4 mt-0.5 shrink-0 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <p class="text-[11px] sm:text-xs font-semibold leading-snug">
+                                        Hay errores en las vistas. Revisa tu dibujo e inténtalo de nuevo.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Resultado numérico -->
+                            <div id="feedback-score-box" class="hidden space-y-1.5">
+                                <div class="flex items-baseline justify-between">
+                                    <span class="text-[11px] sm:text-xs font-semibold text-slate-600">Precisión global</span>
+                                    <span id="score-percent" class="text-xl sm:text-2xl font-extrabold text-emerald-600">0%</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div id="score-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <div id="score-details" class="text-[11px] sm:text-xs text-slate-600 space-y-0.5 pt-0.5"></div>
+                                <button id="btn-clear-check" class="text-[11px] sm:text-xs font-semibold text-blue-600 hover:underline cursor-pointer">
+                                    Ocultar corrección
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Leyenda visual -->
+                        <div class="mt-2 pt-2 border-t border-slate-100 space-y-1 text-[10px] sm:text-[11px] text-slate-600">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-0.5 bg-slate-900 rounded-full inline-block shrink-0"></span>
+                                <span>Arista visible (continua)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 border-t-2 border-dashed border-slate-600 inline-block shrink-0"></span>
+                                <span>Arista oculta (discontinua)</span>
+                            </div>
+                            <div id="legend-check" class="hidden pt-1 space-y-0.5 border-t border-slate-100 mt-1">
+                                <div class="flex items-center gap-2 text-emerald-700 font-medium">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+                                    <span>Arista correcta</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-rose-700 font-medium">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shrink-0"></span>
+                                    <span>Incorrecta o sobrante</span>
+                                </div>
+                                <div id="legend-missing-row" class="flex items-center gap-2 text-amber-700 font-medium">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block shrink-0"></span>
+                                    <span>Arista que falta</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- NOTIFICACIÓN TOAST -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-xl opacity-0 pointer-events-none transition-all duration-300 translate-y-2 text-center max-w-[90vw]">
+        Mensaje
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        /**
+         * =========================================================================
+         * CONSTANTES DE CONFIGURACIÓN, NIVELES Y PERSISTENCIA
+         * =========================================================================
+         */
+        const STORAGE_KEY = 'diedricas3d_edu_v2';
+        const GRID_SIZE = 3;
+        const VIEWS = ['alzado', 'perfil', 'planta'];
+        const PAD = 24;
+        const CELL = 64;
+        const TOTAL = PAD * 2 + CELL * GRID_SIZE; // 240
+
+        const DIFFICULTY_META = {
+            muy_facil:   { label: 'Muy fácil',   minBlocks: 5,  maxBlocks: 9,  minRamps: 0, maxRamps: 0, maxDashed: 2,  minDashed: 0, allowWedges: false, allowOverhang: false, minDiags: 0 },
+            facil:       { label: 'Fácil',       minBlocks: 8,  maxBlocks: 12, minRamps: 0, maxRamps: 1, maxDashed: 6,  minDashed: 0, allowWedges: false, allowOverhang: false, minDiags: 0 },
+            medio:       { label: 'Medio',       minBlocks: 10, maxBlocks: 15, minRamps: 1, maxRamps: 3, maxDashed: 14, minDashed: 2, allowWedges: true,  allowOverhang: true,  minDiags: 1 },
+            dificil:     { label: 'Difícil',     minBlocks: 12, maxBlocks: 18, minRamps: 2, maxRamps: 4, maxDashed: 24, minDashed: 4, allowWedges: true,  allowOverhang: true,  minDiags: 2 },
+            muy_dificil: { label: 'Muy difícil', minBlocks: 13, maxBlocks: 20, minRamps: 3, maxRamps: 6, maxDashed: 40, minDashed: 6, allowWedges: true,  allowOverhang: true,  minDiags: 3 }
+        };
+
+        // Secuencias incrementales exactas de 10 figuras por nivel de evaluación
+        const EVAL_BLUEPRINTS = {
+            basico: {
+                label: 'Básico',
+                steps: [
+                    'muy_facil', 'muy_facil', 'muy_facil', 'muy_facil',
+                    'facil', 'facil', 'facil', 'facil', 'facil', 'facil'
+                ]
+            },
+            intermedio: {
+                label: 'Intermedio',
+                steps: [
+                    'facil', 'facil',
+                    'medio', 'medio', 'medio', 'medio', 'medio', 'medio',
+                    'dificil', 'dificil'
+                ]
+            },
+            avanzado: {
+                label: 'Avanzado',
+                steps: [
+                    'medio', 'medio',
+                    'dificil', 'dificil', 'dificil', 'dificil',
+                    'muy_dificil', 'muy_dificil', 'muy_dificil', 'muy_dificil'
+                ]
+            }
+        };
+
+        /**
+         * =========================================================================
+         * ESTADO GLOBAL DE LA APLICACIÓN
+         * =========================================================================
+         */
+        const state = {
+            userName: null,
+            mode: 'practice',                  // 'practice' | 'eval'
+            practiceDifficulty: 'medio',
+            evalLevel: 'basico',
+            evalData: {
+                basico: null,
+                intermedio: null,
+                avanzado: null
+            },
+            // Figura actualmente cargada en pantalla
+            grid: createEmptyGrid(),
+            meshData: null,
+            solution: null,
+            cubeCount: 0,
+            rampCount: 0,
+            // Herramientas y dibujo
+            tool: 'solid',                     // 'solid' | 'dashed' | 'eraser'
+            showUnitGrid: false,
+            drawings: createEmptyDrawings(),
+            history: [],
+            checkActive: false,
+            showSolution: false,
+            mobileView: 'both'                 // 'both' | '3d' | 'draw'
+        };
+
+        // Variables Three.js (sin sombras)
+        let scene, camera, renderer, controls, figureGroup, unitGridLines = null;
+        let cameraAnim = null;
+
+        // Referencias SVG
+        const svgRefs = {};
+
+        /* =========================================================================
+         * UTILIDADES GENERALES Y TOAST / MODALES
+         * ========================================================================= */
+        function createEmptyGrid() {
+            return Array.from({ length: GRID_SIZE }, () =>
+                Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null))
+            );
+        }
+
+        function createEmptyDrawings() {
+            return { alzado: {}, perfil: {}, planta: {} };
+        }
+
+        function cloneDrawings(d) {
+            return {
+                alzado: { ...(d?.alzado || {}) },
+                perfil: { ...(d?.perfil || {}) },
+                planta: { ...(d?.planta || {}) }
+            };
+        }
+
+        function countPieces(grid) {
+            let cubes = 0, ramps = 0;
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const t = grid[x][y][z];
+                        if (t === 'cube') cubes++;
+                        else if (t) ramps++;
+                    }
+                }
+            }
+            return { cubes, ramps };
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.remove('opacity-0', 'translate-y-2');
+            el.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.classList.add('opacity-0', 'translate-y-2');
+                el.classList.remove('opacity-100', 'translate-y-0');
+            }, 2400);
+        }
+
+        // Modal de confirmación personalizado (sin usar alert/confirm)
+        let confirmCallback = null;
+        function openConfirmModal(title, message, okLabel, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            document.getElementById('confirm-ok').textContent = okLabel || 'Confirmar';
+            confirmCallback = onConfirm;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        /* =========================================================================
+         * PERSISTENCIA LOCAL (localStorage) POR USUARIO
+         * ========================================================================= */
+        function loadStorageRoot() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return { activeUser: null, users: {} };
+                const parsed = JSON.parse(raw);
+                return {
+                    activeUser: parsed.activeUser || null,
+                    users: parsed.users || {}
+                };
+            } catch (e) {
+                console.warn('No se pudo leer localStorage:', e);
+                return { activeUser: null, users: {} };
+            }
+        }
+
+        function saveStateToStorage() {
+            if (!state.userName) return;
+            try {
+                if (state.mode === 'eval') {
+                    const lvl = state.evalData[state.evalLevel];
+                    if (lvl && lvl.sequence[lvl.currentIndex]) {
+                        lvl.sequence[lvl.currentIndex].drawings = cloneDrawings(state.drawings);
+                    }
+                }
+
+                const root = loadStorageRoot();
+                root.activeUser = state.userName;
+                root.users[state.userName] = {
+                    mode: state.mode,
+                    practiceDifficulty: state.practiceDifficulty,
+                    evalLevel: state.evalLevel,
+                    evalData: state.evalData
+                };
+
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(root));
+                } catch (quotaErr) {
+                    for (const uKey of Object.keys(root.users)) {
+                        const ed = root.users[uKey]?.evalData;
+                        if (!ed) continue;
+                        for (const lv of Object.keys(ed)) {
+                            ed[lv]?.sequence?.forEach(item => { item.thumbnail = null; });
+                        }
+                    }
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(root));
+                }
+            } catch (e) {
+                console.warn('No se pudo guardar en localStorage:', e);
+            }
+        }
+
+        function restoreUserSession(name) {
+            state.userName = name;
+            const root = loadStorageRoot();
+            const saved = root.users[name];
+
+            if (saved) {
+                state.mode = saved.mode || 'practice';
+                state.practiceDifficulty = saved.practiceDifficulty || 'medio';
+                state.evalLevel = saved.evalLevel || 'basico';
+                state.evalData = saved.evalData || { basico: null, intermedio: null, avanzado: null };
+            } else {
+                state.mode = 'practice';
+                state.practiceDifficulty = 'medio';
+                state.evalLevel = 'basico';
+                state.evalData = { basico: null, intermedio: null, avanzado: null };
+            }
+
+            document.getElementById('header-user-name').textContent = state.userName;
+            document.getElementById('header-user-avatar').textContent = state.userName.trim().charAt(0).toUpperCase() || 'A';
+            document.getElementById('practice-diff-select').value = state.practiceDifficulty;
+
+            document.getElementById('login-modal').classList.add('hidden');
+            switchMode(state.mode, true);
+            saveStateToStorage();
+        }
+
+        function logoutUser() {
+            const root = loadStorageRoot();
+            root.activeUser = null;
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(root)); } catch (e) {}
+            state.userName = null;
+            document.getElementById('student-name-input').value = '';
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('login-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('student-name-input').focus(), 80);
+        }
+
+        /* =========================================================================
+         * MOTOR DE GEOMETRÍA EXACTA (CUBOS, RAMPAS Y CHAFLANES EN 3x3x3)
+         * ========================================================================= */
+        const CELL_WALL_MASKS = {
+            cube:       { nx: 15, px: 15, ny: 15, py: 15, nz: 15, pz: 15 },
+            ramp_pz:    { nx: 9,  px: 9,  ny: 15, py: 0,  nz: 15, pz: 0  },
+            ramp_nz:    { nx: 3,  px: 3,  ny: 15, py: 0,  nz: 0,  pz: 15 },
+            ramp_px:    { nx: 15, px: 0,  ny: 15, py: 0,  nz: 9,  pz: 9  },
+            ramp_nx:    { nx: 0,  px: 15, ny: 15, py: 0,  nz: 3,  pz: 3  },
+            wedge_pxpz: { nx: 15, px: 0,  ny: 9,  py: 9,  nz: 15, pz: 0  },
+            wedge_nxpz: { nx: 0,  px: 15, ny: 3,  py: 3,  nz: 15, pz: 0  },
+            wedge_pxnz: { nx: 15, px: 0,  ny: 12, py: 12, nz: 0,  pz: 15 },
+            wedge_nxnz: { nx: 0,  px: 15, ny: 6,  py: 6,  nz: 0,  pz: 15 }
+        };
+
+        const CELL_SLOPES = {
+            ramp_pz:    [[[0,1,0], [0,0,1], [1,0,1], [1,1,0]]],
+            ramp_nz:    [[[1,1,1], [1,0,0], [0,0,0], [0,1,1]]],
+            ramp_px:    [[[0,1,1], [1,0,1], [1,0,0], [0,1,0]]],
+            ramp_nx:    [[[1,1,0], [0,0,0], [0,0,1], [1,1,1]]],
+            wedge_pxpz: [[[1,0,0], [1,1,0], [0,1,1], [0,0,1]]],
+            wedge_nxpz: [[[1,0,1], [1,1,1], [0,1,0], [0,0,0]]],
+            wedge_pxnz: [[[0,0,0], [0,1,0], [1,1,1], [1,0,1]]],
+            wedge_nxnz: [[[0,0,1], [0,1,1], [1,1,0], [1,0,0]]]
+        };
+
+        function vecSub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+        function vecCross(a, b) {
+            return [
+                a[1] * b[2] - a[2] * b[1],
+                a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0]
+            ];
+        }
+        function vecDot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+        function vecNorm(a) {
+            const len = Math.hypot(a[0], a[1], a[2]) || 1;
+            return [a[0] / len, a[1] / len, a[2] / len];
+        }
+
+        function emitMaskTriangles(mask, pts, flipWinding, triangles) {
+            const addTri = (p0, p1, p2) => {
+                const v0 = p0, v1 = flipWinding ? p2 : p1, v2 = flipWinding ? p1 : p2;
+                const n = vecNorm(vecCross(vecSub(v1, v0), vecSub(v2, v0)));
+                triangles.push({ v0, v1, v2, normal: n });
+            };
+
+            if (mask === 0) return false;
+            if (mask === 15) {
+                addTri(pts[0], pts[1], pts[2]);
+                addTri(pts[0], pts[2], pts[3]);
+                return false;
+            }
+            if (mask === 9)  { addTri(pts[0], pts[1], pts[3]); return false; }
+            if (mask === 6)  { addTri(pts[1], pts[2], pts[3]); return false; }
+            if (mask === 3)  { addTri(pts[0], pts[1], pts[2]); return false; }
+            if (mask === 12) { addTri(pts[0], pts[2], pts[3]); return false; }
+
+            if (mask & 1) addTri(pts[0], pts[1], pts[4]);
+            if (mask & 2) addTri(pts[1], pts[2], pts[4]);
+            if (mask & 4) addTri(pts[2], pts[3], pts[4]);
+            if (mask & 8) addTri(pts[3], pts[0], pts[4]);
+            return true;
+        }
+
+        function buildExactMeshData(grid) {
+            const triangles = [];
+            let hasQuarterCut = false;
+
+            const getMask = (x, y, z, wall) => {
+                if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || z < 0 || z >= GRID_SIZE) return 0;
+                const t = grid[x][y][z];
+                return t ? CELL_WALL_MASKS[t][wall] : 0;
+            };
+
+            // Paredes X
+            for (let x = 0; x <= GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const posMask = getMask(x - 1, y, z, 'px');
+                        const negMask = getMask(x, y, z, 'nx');
+                        const remPos = posMask & ~negMask;
+                        const remNeg = negMask & ~posMask;
+                        if (!remPos && !remNeg) continue;
+                        const pts = [[x, y, z], [x, y, z + 1], [x, y + 1, z + 1], [x, y + 1, z], [x, y + 0.5, z + 0.5]];
+                        if (remPos && emitMaskTriangles(remPos, pts, true, triangles)) hasQuarterCut = true;
+                        if (remNeg && emitMaskTriangles(remNeg, pts, false, triangles)) hasQuarterCut = true;
+                    }
+                }
+            }
+
+            // Paredes Y
+            for (let y = 0; y <= GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const posMask = getMask(x, y - 1, z, 'py');
+                        const negMask = getMask(x, y, z, 'ny');
+                        const remPos = posMask & ~negMask;
+                        const remNeg = negMask & ~posMask;
+                        if (!remPos && !remNeg) continue;
+                        const pts = [[x, y, z], [x + 1, y, z], [x + 1, y, z + 1], [x, y, z + 1], [x + 0.5, y, z + 0.5]];
+                        if (remPos && emitMaskTriangles(remPos, pts, true, triangles)) hasQuarterCut = true;
+                        if (remNeg && emitMaskTriangles(remNeg, pts, false, triangles)) hasQuarterCut = true;
+                    }
+                }
+            }
+
+            // Paredes Z
+            for (let z = 0; z <= GRID_SIZE; z++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    for (let y = 0; y < GRID_SIZE; y++) {
+                        const posMask = getMask(x, y, z - 1, 'pz');
+                        const negMask = getMask(x, y, z, 'nz');
+                        const remPos = posMask & ~negMask;
+                        const remNeg = negMask & ~posMask;
+                        if (!remPos && !remNeg) continue;
+                        const pts = [[x, y, z], [x + 1, y, z], [x + 1, y + 1, z], [x, y + 1, z], [x + 0.5, y + 0.5, z]];
+                        if (remPos && emitMaskTriangles(remPos, pts, false, triangles)) hasQuarterCut = true;
+                        if (remNeg && emitMaskTriangles(remNeg, pts, true, triangles)) hasQuarterCut = true;
+                    }
+                }
+            }
+
+            // Caras inclinadas
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        const t = grid[x][y][z];
+                        if (!t || !CELL_SLOPES[t]) continue;
+                        for (const quad of CELL_SLOPES[t]) {
+                            const p = quad.map(q => [q[0] + x, q[1] + y, q[2] + z]);
+                            const n = vecNorm(vecCross(vecSub(p[1], p[0]), vecSub(p[2], p[0])));
+                            triangles.push({ v0: p[0], v1: p[1], v2: p[2], normal: n });
+                            triangles.push({ v0: p[0], v1: p[2], v2: p[3], normal: n });
+                        }
+                    }
+                }
+            }
+
+            // Extraer aristas reales (cambio de normal entre caras adyacentes)
+            const edgeMap = new Map();
+            const ptKey = (p) => `${Math.round(p[0] * 2)},${Math.round(p[1] * 2)},${Math.round(p[2] * 2)}`;
+
+            for (const tri of triangles) {
+                const pairs = [[tri.v0, tri.v1], [tri.v1, tri.v2], [tri.v2, tri.v0]];
+                for (const [a, b] of pairs) {
+                    const ka = ptKey(a), kb = ptKey(b);
+                    const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+                    let entry = edgeMap.get(key);
+                    if (!entry) {
+                        entry = { p0: ka < kb ? a : b, p1: ka < kb ? b : a, normals: [] };
+                        edgeMap.set(key, entry);
+                    }
+                    entry.normals.push(tri.normal);
+                }
+            }
+
+            const realEdges = [];
+            for (const entry of edgeMap.values()) {
+                if (entry.normals.length !== 2 || vecDot(entry.normals[0], entry.normals[1]) < 0.995) {
+                    realEdges.push({ p0: entry.p0, p1: entry.p1 });
+                }
+            }
+
+            return { triangles, realEdges, hasQuarterCut };
+        }
+
+        /* =========================================================================
+         * PROYECCIÓN ORTOGRÁFICA Y VISIBILIDAD EXACTA POR RAYCASTING 2D
+         * ========================================================================= */
+        function projectPoint(p, view) {
+            if (view === 'alzado') return { u: p[0], v: GRID_SIZE - p[1], d: p[2] };
+            if (view === 'planta') return { u: p[0], v: p[2], d: p[1] };
+            return { u: p[2], v: GRID_SIZE - p[1], d: -p[0] }; // perfil izquierdo
+        }
+
+        function map2DEdgeToSegId(a, b) {
+            const u0 = Math.round(a.u), v0 = Math.round(a.v);
+            const u1 = Math.round(b.u), v1 = Math.round(b.v);
+            if (u0 === u1 && v0 === v1) return null;
+            const du = Math.abs(u1 - u0), dv = Math.abs(v1 - v0);
+            if (du === 1 && dv === 0) return `H-${v0}-${Math.min(u0, u1)}`;
+            if (du === 0 && dv === 1) return `V-${Math.min(v0, v1)}-${u0}`;
+            if (du === 1 && dv === 1) {
+                const c = Math.min(u0, u1), r = Math.min(v0, v1);
+                const isD2 = (u0 === c && v0 === r) || (u1 === c && v1 === r);
+                return isD2 ? `D2-${r}-${c}` : `D1-${r}-${c}`;
+            }
+            return null;
+        }
+
+        function isPointOccluded2D(u, v, refDepth, projTris) {
+            const EPS_BARY = 1e-6;
+            const EPS_DEPTH = 1e-4;
+            for (let i = 0; i < projTris.length; i++) {
+                const t = projTris[i];
+                if (u < t.minU - EPS_BARY || u > t.maxU + EPS_BARY || v < t.minV - EPS_BARY || v > t.maxV + EPS_BARY) continue;
+                const w0 = ((t.v1 - t.v2) * (u - t.u2) + (t.u2 - t.u1) * (v - t.v2)) * t.invDenom;
+                if (w0 < -EPS_BARY) continue;
+                const w1 = ((t.v2 - t.v0) * (u - t.u2) + (t.u0 - t.u2) * (v - t.v2)) * t.invDenom;
+                if (w1 < -EPS_BARY) continue;
+                const w2 = 1 - w0 - w1;
+                if (w2 < -EPS_BARY) continue;
+                if (w0 * t.d0 + w1 * t.d1 + w2 * t.d2 > refDepth + EPS_DEPTH) return true;
+            }
+            return false;
+        }
+
+        function computeExactSolutions(meshData) {
+            const solution = { alzado: {}, perfil: {}, planta: {} };
+            let hasAmbiguousEdge = false;
+            let dashedCount = 0;
+            let diagCount = 0;
+
+            for (const view of VIEWS) {
+                const projTris = [];
+                for (const tri of meshData.triangles) {
+                    const p0 = projectPoint(tri.v0, view);
+                    const p1 = projectPoint(tri.v1, view);
+                    const p2 = projectPoint(tri.v2, view);
+                    const denom = (p1.v - p2.v) * (p0.u - p2.u) + (p2.u - p1.u) * (p0.v - p2.v);
+                    if (Math.abs(denom) < 1e-6) continue;
+                    projTris.push({
+                        u0: p0.u, v0: p0.v, d0: p0.d,
+                        u1: p1.u, v1: p1.v, d1: p1.d,
+                        u2: p2.u, v2: p2.v, d2: p2.d,
+                        invDenom: 1 / denom,
+                        minU: Math.min(p0.u, p1.u, p2.u), maxU: Math.max(p0.u, p1.u, p2.u),
+                        minV: Math.min(p0.v, p1.v, p2.v), maxV: Math.max(p0.v, p1.v, p2.v)
+                    });
+                }
+
+                const delta = 0.0025;
+                const sampleTs = [0.25, 0.5, 0.75];
+
+                for (const edge of meshData.realEdges) {
+                    const a = projectPoint(edge.p0, view);
+                    const b = projectPoint(edge.p1, view);
+                    const segId = map2DEdgeToSegId(a, b);
+                    if (!segId) continue;
+
+                    const du = b.u - a.u, dv = b.v - a.v;
+                    const len = Math.hypot(du, dv) || 1;
+                    const pu = (-dv / len) * delta, pv = (du / len) * delta;
+
+                    let visSamples = 0, hidSamples = 0;
+                    for (const t of sampleTs) {
+                        const u = a.u + du * t, v = a.v + dv * t, d = a.d + (b.d - a.d) * t;
+                        if (isPointOccluded2D(u + pu, v + pv, d, projTris) && isPointOccluded2D(u - pu, v - pv, d, projTris)) {
+                            hidSamples++;
+                        } else {
+                            visSamples++;
+                        }
+                    }
+
+                    if (visSamples > 0 && hidSamples > 0) hasAmbiguousEdge = true;
+                    if (visSamples > 0) solution[view][segId] = 'solid';
+                    else if (solution[view][segId] !== 'solid') solution[view][segId] = 'dashed';
+                }
+
+                for (const [id, val] of Object.entries(solution[view])) {
+                    if (val === 'dashed') dashedCount++;
+                    if (id.startsWith('D')) diagCount++;
+                }
+            }
+
+            return { solution, hasAmbiguousEdge, dashedCount, diagCount };
+        }
+
+        /* =========================================================================
+         * GENERADOR DE FIGURAS POR NIVEL DE DIFICULTAD (5 NIVELES)
+         * ========================================================================= */
+        function isGridConnected(grid) {
+            let total = 0, start = null;
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        if (grid[x][y][z]) { total++; if (!start) start = [x, y, z]; }
+                    }
+                }
+            }
+            if (total === 0) return false;
+
+            const visited = new Set([start.join(',')]);
+            const queue = [start];
+            let count = 0;
+            const wallPairs = [
+                [1, 0, 0, 'px', 'nx'], [-1, 0, 0, 'nx', 'px'],
+                [0, 1, 0, 'py', 'ny'], [0, -1, 0, 'ny', 'py'],
+                [0, 0, 1, 'pz', 'nz'], [0, 0, -1, 'nz', 'pz']
+            ];
+
+            while (queue.length > 0) {
+                const [cx, cy, cz] = queue.shift();
+                count++;
+                const ct = grid[cx][cy][cz];
+                for (const [dx, dy, dz, w1, w2] of wallPairs) {
+                    const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+                    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || nz < 0 || nz >= GRID_SIZE) continue;
+                    const nt = grid[nx][ny][nz];
+                    if (!nt) continue;
+                    if ((CELL_WALL_MASKS[ct][w1] & CELL_WALL_MASKS[nt][w2]) === 0) continue;
+                    const key = `${nx},${ny},${nz}`;
+                    if (!visited.has(key)) { visited.add(key); queue.push([nx, ny, nz]); }
+                }
+            }
+            return count === total;
+        }
+
+        function generateFigureForDifficulty(diffKey) {
+            const cfg = DIFFICULTY_META[diffKey] || DIFFICULTY_META.medio;
+            const dirs = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+
+            let bestCandidate = null;
+            let bestPenalty = Infinity;
+
+            for (let attempt = 0; attempt < 45; attempt++) {
+                const grid = createEmptyGrid();
+                const targetCount = cfg.minBlocks + Math.floor(Math.random() * (cfg.maxBlocks - cfg.minBlocks + 1));
+                const cells = [];
+
+                let sx, sz;
+                if (diffKey === 'muy_facil') {
+                    sx = Math.random() < 0.5 ? 0 : 1;
+                    sz = 0;
+                } else {
+                    sx = Math.floor(Math.random() * GRID_SIZE);
+                    sz = Math.floor(Math.random() * GRID_SIZE);
+                }
+                grid[sx][0][sz] = 'cube';
+                cells.push([sx, 0, sz]);
+
+                while (cells.length < targetCount) {
+                    const candidates = [];
+                    for (const [cx, cy, cz] of cells) {
+                        for (const [dx, dy, dz] of dirs) {
+                            const nx = cx + dx, ny = cy + dy, nz = cz + dz;
+                            if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE || nz < 0 || nz >= GRID_SIZE) continue;
+                            if (grid[nx][ny][nz]) continue;
+                            if (!cfg.allowOverhang && ny > 0 && grid[nx][ny - 1][nz] !== 'cube') continue;
+
+                            let weight = 1;
+                            if (diffKey === 'muy_facil') {
+                                weight = (ny === 0 ? 6 : 4) + (nz === 0 ? 3 : 0);
+                            } else if (diffKey === 'facil') {
+                                weight = ny === 0 ? 5 : 3;
+                            } else {
+                                if (ny === 0) weight = 4;
+                                else if (grid[nx][ny - 1][nz] === 'cube') weight = 3;
+                                else weight = diffKey === 'muy_dificil' ? 3 : 1;
+                            }
+                            for (let w = 0; w < weight; w++) candidates.push([nx, ny, nz]);
+                        }
+                    }
+                    if (candidates.length === 0) break;
+                    const [px, py, pz] = candidates[Math.floor(Math.random() * candidates.length)];
+                    grid[px][py][pz] = 'cube';
+                    cells.push([px, py, pz]);
+                }
+
+                // Añadir rampas y chaflanes según dificultad
+                let rampCount = 0;
+                const desiredRamps = cfg.minRamps + Math.floor(Math.random() * (cfg.maxRamps - cfg.minRamps + 1));
+
+                if (desiredRamps > 0) {
+                    const shuffled = [...cells].sort(() => Math.random() - 0.5);
+                    const hasCube = (x, y, z) =>
+                        x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && z >= 0 && z < GRID_SIZE && grid[x][y][z] === 'cube';
+                    const isEmpty = (x, y, z) =>
+                        x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || z < 0 || z >= GRID_SIZE || !grid[x][y][z];
+
+                    for (const [x, y, z] of shuffled) {
+                        if (rampCount >= desiredRamps) break;
+                        if (!isEmpty(x, y + 1, z)) continue;
+                        if (y > 0 && !hasCube(x, y - 1, z)) continue;
+
+                        const options = [];
+                        if (isEmpty(x, y, z + 1) && (z === 0 || hasCube(x, y, z - 1))) options.push('ramp_pz', 'ramp_pz');
+                        if (isEmpty(x, y, z - 1) && (z === 2 || hasCube(x, y, z + 1))) options.push('ramp_nz', 'ramp_nz');
+                        if (isEmpty(x + 1, y, z) && (x === 0 || hasCube(x - 1, y, z))) options.push('ramp_px', 'ramp_px');
+                        if (isEmpty(x - 1, y, z) && (x === 2 || hasCube(x + 1, y, z))) options.push('ramp_nx', 'ramp_nx');
+
+                        if (cfg.allowWedges) {
+                            if (isEmpty(x + 1, y, z) && isEmpty(x, y, z + 1) && (hasCube(x - 1, y, z) || hasCube(x, y, z - 1))) options.push('wedge_pxpz');
+                            if (isEmpty(x - 1, y, z) && isEmpty(x, y, z + 1) && (hasCube(x + 1, y, z) || hasCube(x, y, z - 1))) options.push('wedge_nxpz');
+                            if (isEmpty(x + 1, y, z) && isEmpty(x, y, z - 1) && (hasCube(x - 1, y, z) || hasCube(x, y, z + 1))) options.push('wedge_pxnz');
+                            if (isEmpty(x - 1, y, z) && isEmpty(x, y, z - 1) && (hasCube(x + 1, y, z) || hasCube(x, y, z + 1))) options.push('wedge_nxnz');
+                        }
+
+                        if (options.length === 0) continue;
+                        const chosen = options[Math.floor(Math.random() * options.length)];
+                        grid[x][y][z] = chosen;
+
+                        if (!isGridConnected(grid)) { grid[x][y][z] = 'cube'; continue; }
+                        const tm = buildExactMeshData(grid);
+                        if (tm.hasQuarterCut) { grid[x][y][z] = 'cube'; continue; }
+                        const ts = computeExactSolutions(tm);
+                        if (ts.hasAmbiguousEdge) { grid[x][y][z] = 'cube'; continue; }
+
+                        rampCount++;
+                    }
+                }
+
+                const meshData = buildExactMeshData(grid);
+                if (meshData.hasQuarterCut) continue;
+                const solRes = computeExactSolutions(meshData);
+                if (solRes.hasAmbiguousEdge) continue;
+
+                let penalty = 0;
+                if (solRes.dashedCount > cfg.maxDashed) penalty += (solRes.dashedCount - cfg.maxDashed) * 4;
+                if (solRes.dashedCount < cfg.minDashed) penalty += (cfg.minDashed - solRes.dashedCount) * 4;
+                if (rampCount < cfg.minRamps) penalty += (cfg.minRamps - rampCount) * 6;
+                if (solRes.diagCount < cfg.minDiags) penalty += (cfg.minDiags - solRes.diagCount) * 3;
+
+                let maxY = 0;
+                for (const [, y] of cells) if (y > maxY) maxY = y;
+                if (maxY < 1) penalty += 10;
+
+                if (penalty < bestPenalty) {
+                    bestPenalty = penalty;
+                    bestCandidate = { grid, meshData, solution: solRes.solution };
+                }
+                if (penalty === 0) break;
+            }
+
+            return bestCandidate || {
+                grid: createEmptyGrid(),
+                meshData: buildExactMeshData(createEmptyGrid()),
+                solution: { alzado: {}, perfil: {}, planta: {} }
+            };
+        }
+
+        /* =========================================================================
+         * GESTIÓN DE MODOS: PRÁCTICA Y EVALUACIÓN
+         * ========================================================================= */
+        function ensureEvalLevelInitialized(levelKey) {
+            if (state.evalData[levelKey] && Array.isArray(state.evalData[levelKey].sequence) && state.evalData[levelKey].sequence.length === 10) {
+                return state.evalData[levelKey];
+            }
+            const blueprint = EVAL_BLUEPRINTS[levelKey];
+            const sequence = blueprint.steps.map(diffKey => {
+                const fig = generateFigureForDifficulty(diffKey);
+                return {
+                    difficulty: diffKey,
+                    grid: fig.grid,
+                    solved: false,
+                    drawings: createEmptyDrawings(),
+                    thumbnail: null,
+                    solvedAt: null
+                };
+            });
+            state.evalData[levelKey] = {
+                sequence,
+                currentIndex: 0,
+                completed: false
+            };
+            return state.evalData[levelKey];
+        }
+
+        function loadGridIntoWorkspace(grid, drawings = null) {
+            state.grid = grid;
+            state.meshData = buildExactMeshData(grid);
+            state.solution = computeExactSolutions(state.meshData).solution;
+            const counts = countPieces(grid);
+            state.cubeCount = counts.cubes;
+            state.rampCount = counts.ramps;
+
+            state.drawings = drawings ? cloneDrawings(drawings) : createEmptyDrawings();
+            state.history = [];
+            state.checkActive = false;
+            state.showSolution = false;
+
+            const badge = document.getElementById('piece-stats-badge');
+            badge.textContent = state.rampCount > 0
+                ? `${state.cubeCount} cubos · ${state.rampCount} rampas`
+                : `${state.cubeCount} cubos`;
+
+            clearCheckOverlay();
+            renderSolutionOverlay();
+            renderAllUserDrawings();
+            updateUndoButton();
+            rebuild3DFigure();
+            animateCameraTo('iso');
+        }
+
+        function startPracticeFigure() {
+            const fig = generateFigureForDifficulty(state.practiceDifficulty);
+            loadGridIntoWorkspace(fig.grid, null);
+        }
+
+        function loadCurrentEvalFigure() {
+            const lvl = ensureEvalLevelInitialized(state.evalLevel);
+            const item = lvl.sequence[lvl.currentIndex];
+            loadGridIntoWorkspace(item.grid, item.drawings);
+            updateEvalUI();
+        }
+
+        function switchMode(newMode, isInit = false) {
+            if (!isInit && state.mode === 'eval') {
+                saveStateToStorage();
+            }
+
+            state.mode = newMode;
+            const isPractice = (newMode === 'practice');
+
+            document.getElementById('tab-practice').classList.toggle('active', isPractice);
+            document.getElementById('tab-eval').classList.toggle('active', !isPractice);
+            document.getElementById('bar-practice').classList.toggle('hidden', !isPractice);
+            document.getElementById('bar-eval').classList.toggle('hidden', isPractice);
+            document.getElementById('eval-solved-banner').classList.add('hidden');
+            document.getElementById('legend-missing-row').classList.toggle('hidden', !isPractice);
+
+            if (isPractice) {
+                startPracticeFigure();
+            } else {
+                loadCurrentEvalFigure();
+            }
+            saveStateToStorage();
+        }
+
+        function updateEvalUI() {
+            for (const key of ['basico', 'intermedio', 'avanzado']) {
+                const d = state.evalData[key];
+                const solved = d ? d.sequence.filter(s => s.solved).length : 0;
+                const badgeEl = document.getElementById(`badge-eval-${key}`);
+                if (badgeEl) badgeEl.textContent = `${solved}/10`;
+                const tabBtn = document.querySelector(`.eval-tab[data-eval-level="${key}"]`);
+                if (tabBtn) tabBtn.classList.toggle('active', key === state.evalLevel);
+            }
+
+            const lvl = ensureEvalLevelInitialized(state.evalLevel);
+            const idx = lvl.currentIndex;
+            const item = lvl.sequence[idx];
+            const solvedCount = lvl.sequence.filter(s => s.solved).length;
+            const allSolved = (solvedCount === 10);
+            lvl.completed = allSolved;
+
+            const diffLabel = DIFFICULTY_META[item.difficulty]?.label || item.difficulty;
+            document.getElementById('eval-figure-label').textContent = `Figura ${idx + 1} de 10 · ${diffLabel}`;
+            document.getElementById('eval-progress-bar').style.width = `${(solvedCount / 10) * 100}%`;
+
+            const pillsContainer = document.getElementById('eval-step-pills');
+            pillsContainer.innerHTML = '';
+            lvl.sequence.forEach((step, i) => {
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.textContent = step.solved ? '✓' : String(i + 1);
+                pill.title = `Figura ${i + 1} (${DIFFICULTY_META[step.difficulty].label})`;
+
+                let cls = 'w-6 h-6 rounded-lg text-[11px] font-bold flex items-center justify-center transition ';
+                if (i === idx) {
+                    cls += step.solved
+                        ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
+                        : 'bg-blue-600 text-white ring-2 ring-blue-300';
+                } else if (step.solved) {
+                    cls += 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 cursor-pointer';
+                    pill.addEventListener('click', () => {
+                        saveStateToStorage();
+                        lvl.currentIndex = i;
+                        loadCurrentEvalFigure();
+                        saveStateToStorage();
+                    });
+                } else {
+                    cls += 'bg-slate-100 text-slate-400 cursor-not-allowed';
+                }
+                pill.className = cls;
+                pillsContainer.appendChild(pill);
+            });
+
+            const btnNext = document.getElementById('btn-next-eval');
+            const btnNextText = document.getElementById('btn-next-eval-text');
+            const solvedBanner = document.getElementById('eval-solved-banner');
+
+            if (item.solved) {
+                solvedBanner.classList.remove('hidden');
+                if (idx < 9) {
+                    btnNext.disabled = false;
+                    btnNextText.textContent = 'Siguiente figura →';
+                } else {
+                    btnNext.disabled = false;
+                    btnNextText.textContent = 'Ver Diploma Oficial ★';
+                }
+            } else {
+                solvedBanner.classList.add('hidden');
+                btnNext.disabled = true;
+                btnNextText.textContent = idx < 9 ? 'Siguiente figura →' : 'Completar evaluación';
+            }
+
+            document.getElementById('btn-pdf-official').classList.toggle('hidden', !allSolved);
+        }
+
+        function advanceEvalStep() {
+            const lvl = state.evalData[state.evalLevel];
+            if (!lvl) return;
+            const currentItem = lvl.sequence[lvl.currentIndex];
+            if (!currentItem.solved) {
+                showToast('Debes resolver correctamente esta figura antes de continuar');
+                return;
+            }
+
+            if (lvl.currentIndex < 9) {
+                lvl.currentIndex++;
+                loadCurrentEvalFigure();
+                saveStateToStorage();
+            } else {
+                openCongratsModal();
+            }
+        }
+
+        function openCongratsModal() {
+            document.getElementById('congrats-name').textContent = state.userName;
+            document.getElementById('congrats-level').textContent = EVAL_BLUEPRINTS[state.evalLevel].label;
+            document.getElementById('congrats-modal').classList.remove('hidden');
+        }
+
+        /* =========================================================================
+         * VISOR 3D CON THREE.JS (COMPLETAMENTE SIN SOMBRAS)
+         * ========================================================================= */
+        function init3D() {
+            const container = document.getElementById('viewport-3d');
+            const width = container.clientWidth || 400;
+            const height = container.clientHeight || 360;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+            // Vista isométrica en octante (-X, +Y, +Z): Alzado (+Z) a la derecha y Perfil Izquierdo (-X) a la izquierda
+            camera.position.set(-5.2, 4.6, 5.2);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(width, height);
+            // SIN SOMBRAS (estricto)
+            renderer.shadowMap.enabled = false;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.enablePan = false;
+            controls.minDistance = 4.2;
+            controls.maxDistance = 15;
+            controls.target.set(0, 0, 0);
+
+            // Iluminación limpia sin sombras proyectadas
+            scene.add(new THREE.AmbientLight(0xffffff, 0.48));
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0xdbeafe, 0.35);
+            hemiLight.position.set(0, 10, 0);
+            scene.add(hemiLight);
+
+            const dirMain = new THREE.DirectionalLight(0xffffff, 0.62);
+            dirMain.position.set(6, 11, 8);
+            dirMain.castShadow = false;
+            scene.add(dirMain);
+
+            const dirFill = new THREE.DirectionalLight(0xe0f2fe, 0.36);
+            dirFill.position.set(-8, 4, -5);
+            dirFill.castShadow = false;
+            scene.add(dirFill);
+
+            const dirBottom = new THREE.DirectionalLight(0xfef3c7, 0.18);
+            dirBottom.position.set(2, -7, 3);
+            dirBottom.castShadow = false;
+            scene.add(dirBottom);
+
+            buildReferenceBase();
+
+            figureGroup = new THREE.Group();
+            scene.add(figureGroup);
+
+            const resizeObserver = new ResizeObserver(() => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                if (w > 0 && h > 0) {
+                    camera.aspect = w / h;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(w, h);
+                }
+            });
+            resizeObserver.observe(container);
+        }
+
+        function roundRectCanvas(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        function createFloorLabelTexture(text, colorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 512, 256);
+
+            ctx.fillStyle = colorHex;
+            ctx.strokeStyle = colorHex;
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(256, 118);
+            ctx.lineTo(256, 36);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(222, 72);
+            ctx.lineTo(256, 28);
+            ctx.lineTo(290, 72);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+            roundRectCanvas(ctx, 96, 140, 320, 82, 24);
+            ctx.fill();
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = colorHex;
+            ctx.stroke();
+
+            ctx.fillStyle = colorHex;
+            ctx.font = '700 44px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 183);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.anisotropy = 8;
+            return tex;
+        }
+
+        function buildReferenceBase() {
+            const baseY = -1.504;
+            const gridHelper = new THREE.GridHelper(3, 3, 0x94a3b8, 0xcbd5e1);
+            gridHelper.position.y = baseY;
+            scene.add(gridHelper);
+
+            const alzadoPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 1.15),
+                new THREE.MeshBasicMaterial({ map: createFloorLabelTexture('ALZADO', '#2563eb'), transparent: true, side: THREE.DoubleSide })
+            );
+            alzadoPlane.rotation.x = -Math.PI / 2;
+            alzadoPlane.position.set(0, baseY + 0.008, 2.25);
+            scene.add(alzadoPlane);
+
+            const perfilPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.3, 1.15),
+                new THREE.MeshBasicMaterial({ map: createFloorLabelTexture('PERFIL', '#d97706'), transparent: true, side: THREE.DoubleSide })
+            );
+            perfilPlane.rotation.x = -Math.PI / 2;
+            perfilPlane.rotation.z = -Math.PI / 2;
+            perfilPlane.position.set(-2.25, baseY + 0.008, 0);
+            scene.add(perfilPlane);
+        }
+
+        function populateFigureGroup(targetGroup, grid, meshData, showGuide) {
+            while (targetGroup.children.length > 0) {
+                const child = targetGroup.children[0];
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                    else child.material.dispose();
+                }
+                targetGroup.remove(child);
+            }
+
+            const off = -1.5;
+            const { triangles, realEdges } = meshData;
+
+            const posArr = new Float32Array(triangles.length * 9);
+            const normArr = new Float32Array(triangles.length * 9);
+            for (let i = 0; i < triangles.length; i++) {
+                const t = triangles[i];
+                const idx = i * 9;
+                posArr[idx]     = t.v0[0] + off; posArr[idx + 1] = t.v0[1] + off; posArr[idx + 2] = t.v0[2] + off;
+                posArr[idx + 3] = t.v1[0] + off; posArr[idx + 4] = t.v1[1] + off; posArr[idx + 5] = t.v1[2] + off;
+                posArr[idx + 6] = t.v2[0] + off; posArr[idx + 7] = t.v2[1] + off; posArr[idx + 8] = t.v2[2] + off;
+                for (let k = 0; k < 3; k++) {
+                    normArr[idx + k * 3]     = t.normal[0];
+                    normArr[idx + k * 3 + 1] = t.normal[1];
+                    normArr[idx + k * 3 + 2] = t.normal[2];
+                }
+            }
+
+            const solidGeo = new THREE.BufferGeometry();
+            solidGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+            solidGeo.setAttribute('normal', new THREE.BufferAttribute(normArr, 3));
+            const solidMesh = new THREE.Mesh(
+                solidGeo,
+                new THREE.MeshLambertMaterial({ color: 0xf1f5f9, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 })
+            );
+            targetGroup.add(solidMesh);
+
+            const edgePos = new Float32Array(realEdges.length * 6);
+            for (let i = 0; i < realEdges.length; i++) {
+                const e = realEdges[i];
+                const idx = i * 6;
+                edgePos[idx]     = e.p0[0] + off; edgePos[idx + 1] = e.p0[1] + off; edgePos[idx + 2] = e.p0[2] + off;
+                edgePos[idx + 3] = e.p1[0] + off; edgePos[idx + 4] = e.p1[1] + off; edgePos[idx + 5] = e.p1[2] + off;
+            }
+            const edgeGeo = new THREE.BufferGeometry();
+            edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
+            targetGroup.add(new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x0f172a })));
+
+            const guidePts = [];
+            for (let x = 0; x < GRID_SIZE; x++) {
+                for (let y = 0; y < GRID_SIZE; y++) {
+                    for (let z = 0; z < GRID_SIZE; z++) {
+                        if (!grid[x][y][z]) continue;
+                        const x0 = x + off, x1 = x + 1 + off;
+                        const y0 = y + off, y1 = y + 1 + off;
+                        const z0 = z + off, z1 = z + 1 + off;
+                        guidePts.push(
+                            x0,y0,z0, x1,y0,z0,  x1,y0,z0, x1,y0,z1,  x1,y0,z1, x0,y0,z1,  x0,y0,z1, x0,y0,z0,
+                            x0,y1,z0, x1,y1,z0,  x1,y1,z0, x1,y1,z1,  x1,y1,z1, x0,y1,z1,  x0,y1,z1, x0,y1,z0,
+                            x0,y0,z0, x0,y1,z0,  x1,y0,z0, x1,y1,z0,  x1,y0,z1, x1,y1,z1,  x0,y0,z1, x0,y1,z1
+                        );
+                    }
+                }
+            }
+            const guideGeo = new THREE.BufferGeometry();
+            guideGeo.setAttribute('position', new THREE.Float32BufferAttribute(guidePts, 3));
+            const lines = new THREE.LineSegments(guideGeo, new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.35 }));
+            lines.visible = showGuide;
+            targetGroup.add(lines);
+            return lines;
+        }
+
+        function rebuild3DFigure() {
+            unitGridLines = populateFigureGroup(figureGroup, state.grid, state.meshData, state.showUnitGrid);
+        }
+
+        /**
+         * Captura una imagen 3D isométrica limpia sobre fondo blanco (420x360)
+         * para incrustar en los certificados y diplomas PDF.
+         */
+        function captureIsometricThumbnail(gridToRender) {
+            const snapW = 420, snapH = 360;
+            const prevBg = scene.background;
+            const prevPos = camera.position.clone();
+            const prevTarget = controls.target.clone();
+            const prevAspect = camera.aspect;
+            const prevSize = new THREE.Vector2();
+            renderer.getSize(prevSize);
+            const prevPR = renderer.getPixelRatio();
+            const prevGrid = state.grid;
+            const prevMesh = state.meshData;
+
+            const isDifferentGrid = (gridToRender && gridToRender !== state.grid);
+            if (isDifferentGrid) {
+                populateFigureGroup(figureGroup, gridToRender, buildExactMeshData(gridToRender), false);
+            } else if (unitGridLines) {
+                unitGridLines.visible = false;
+            }
+
+            scene.background = new THREE.Color(0xffffff);
+            renderer.setPixelRatio(1);
+            renderer.setSize(snapW, snapH, false);
+            camera.aspect = snapW / snapH;
+            camera.updateProjectionMatrix();
+            camera.position.set(-5.2, 4.6, 5.2);
+            camera.lookAt(0, 0, 0);
+
+            renderer.render(scene, camera);
+            const dataUrl = renderer.domElement.toDataURL('image/png');
+
+            scene.background = prevBg;
+            renderer.setPixelRatio(prevPR);
+            renderer.setSize(prevSize.x, prevSize.y, false);
+            camera.aspect = prevAspect;
+            camera.updateProjectionMatrix();
+            camera.position.copy(prevPos);
+            controls.target.copy(prevTarget);
+            camera.lookAt(prevTarget);
+
+            if (isDifferentGrid) {
+                unitGridLines = populateFigureGroup(figureGroup, prevGrid, prevMesh, state.showUnitGrid);
+            } else if (unitGridLines) {
+                unitGridLines.visible = state.showUnitGrid;
+            }
+            renderer.render(scene, camera);
+            return dataUrl;
+        }
+
+        function animateCameraTo(preset) {
+            const dist = 8.4;
+            let targetPos;
+            if (preset === 'iso')         targetPos = new THREE.Vector3(-5.2, 4.6, 5.2);
+            else if (preset === 'alzado') targetPos = new THREE.Vector3(0, 0, dist);
+            else if (preset === 'planta') targetPos = new THREE.Vector3(0, dist, 0.01);
+            else if (preset === 'perfil') targetPos = new THREE.Vector3(-dist, 0, 0);
+
+            cameraAnim = {
+                startPos: camera.position.clone(),
+                endPos: targetPos,
+                startTime: performance.now(),
+                duration: 420
+            };
+        }
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            if (cameraAnim) {
+                const t = Math.min(1, (performance.now() - cameraAnim.startTime) / cameraAnim.duration);
+                const ease = 1 - Math.pow(1 - t, 3);
+                camera.position.lerpVectors(cameraAnim.startPos, cameraAnim.endPos, ease);
+                camera.lookAt(0, 0, 0);
+                if (t >= 1) cameraAnim = null;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        /* =========================================================================
+         * TABLEROS DE DIBUJO SVG INTERACTIVOS
+         * (ARRASTRE CONTINUO DE VÉRTICE A VÉRTICE EN TIEMPO REAL SIN SOLTAR)
+         * ========================================================================= */
+        function getSvgCoords(svg, clientX, clientY) {
+            const ctm = svg.getScreenCTM();
+            if (ctm) {
+                const pt = svg.createSVGPoint();
+                pt.x = clientX;
+                pt.y = clientY;
+                const res = pt.matrixTransform(ctm.inverse());
+                return { x: res.x, y: res.y };
+            }
+            const rect = svg.getBoundingClientRect();
+            const scale = Math.min(rect.width / TOTAL, rect.height / TOTAL) || 1;
+            const offsetX = (rect.width - TOTAL * scale) / 2;
+            const offsetY = (rect.height - TOTAL * scale) / 2;
+            return {
+                x: (clientX - rect.left - offsetX) / scale,
+                y: (clientY - rect.top - offsetY) / scale
+            };
+        }
+
+        function findNearestVertex(x, y, maxDist = 26) {
+            let best = null, bestD = maxDist;
+            for (let r = 0; r <= GRID_SIZE; r++) {
+                for (let c = 0; c <= GRID_SIZE; c++) {
+                    const vx = PAD + c * CELL, vy = PAD + r * CELL;
+                    const d = Math.hypot(x - vx, y - vy);
+                    if (d < bestD) { bestD = d; best = { c, r, x: vx, y: vy, d }; }
+                }
+            }
+            return best;
+        }
+
+        function getSegmentsBetweenVertices(v0, v1) {
+            const dc = v1.c - v0.c, dr = v1.r - v0.r;
+            if (dc === 0 && dr === 0) return [];
+            if (dc !== 0 && dr !== 0 && Math.abs(dc) !== Math.abs(dr)) return [];
+            const steps = Math.max(Math.abs(dc), Math.abs(dr));
+            const sc = Math.sign(dc), sr = Math.sign(dr);
+            const ids = [];
+            for (let i = 0; i < steps; i++) {
+                const cA = v0.c + sc * i, rA = v0.r + sr * i;
+                const cB = cA + sc, rB = rA + sr;
+                if (sr === 0) ids.push(`H-${rA}-${Math.min(cA, cB)}`);
+                else if (sc === 0) ids.push(`V-${Math.min(rA, rB)}-${cA}`);
+                else ids.push((sc === sr) ? `D2-${Math.min(rA, rB)}-${Math.min(cA, cB)}` : `D1-${Math.min(rA, rB)}-${Math.min(cA, cB)}`);
+            }
+            return ids;
+        }
+
+        const pointerState = {
+            active: false,
+            view: null,
+            drawAction: null,
+            currentVertex: null,
+            strokeChanged: false,
+            historyPushed: false
+        };
+
+        function buildDrawingGrids() {
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+
+            for (const view of VIEWS) {
+                const container = document.getElementById(`grid-${view}`);
+                container.innerHTML = '';
+
+                const svg = document.createElementNS(SVG_NS, 'svg');
+                svg.setAttribute('viewBox', `0 0 ${TOTAL} ${TOTAL}`);
+                svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                svg.setAttribute('class', 'w-full h-full select-none draft-svg');
+                svg.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                const layerGuide = document.createElementNS(SVG_NS, 'g');
+                const layerSolution = document.createElementNS(SVG_NS, 'g');
+                const layerMissing = document.createElementNS(SVG_NS, 'g');
+                const layerUser = document.createElementNS(SVG_NS, 'g');
+                const layerPreview = document.createElementNS(SVG_NS, 'g');
+                svg.append(layerGuide, layerSolution, layerMissing, layerUser, layerPreview);
+
+                const bgRect = document.createElementNS(SVG_NS, 'rect');
+                bgRect.setAttribute('x', PAD); bgRect.setAttribute('y', PAD);
+                bgRect.setAttribute('width', CELL * GRID_SIZE); bgRect.setAttribute('height', CELL * GRID_SIZE);
+                bgRect.setAttribute('fill', '#f8fafc'); bgRect.setAttribute('rx', '3');
+                layerGuide.appendChild(bgRect);
+
+                // Diagonales guía muy tenues
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        const x0 = PAD + c * CELL, y0 = PAD + r * CELL;
+                        for (const [ax, ay, bx, by] of [[x0, y0, x0 + CELL, y0 + CELL], [x0, y0 + CELL, x0 + CELL, y0]]) {
+                            const dg = document.createElementNS(SVG_NS, 'line');
+                            dg.setAttribute('x1', ax); dg.setAttribute('y1', ay);
+                            dg.setAttribute('x2', bx); dg.setAttribute('y2', by);
+                            dg.setAttribute('stroke', '#f1f5f9'); dg.setAttribute('stroke-width', '1');
+                            layerGuide.appendChild(dg);
+                        }
+                    }
+                }
+
+                // Cuadrícula 3×3
+                for (let i = 0; i <= GRID_SIZE; i++) {
+                    const pos = PAD + i * CELL;
+                    const hG = document.createElementNS(SVG_NS, 'line');
+                    hG.setAttribute('x1', PAD); hG.setAttribute('y1', pos);
+                    hG.setAttribute('x2', PAD + CELL * GRID_SIZE); hG.setAttribute('y2', pos);
+                    hG.setAttribute('stroke', '#cbd5e1'); hG.setAttribute('stroke-width', '1.4');
+                    layerGuide.appendChild(hG);
+
+                    const vG = document.createElementNS(SVG_NS, 'line');
+                    vG.setAttribute('x1', pos); vG.setAttribute('y1', PAD);
+                    vG.setAttribute('x2', pos); vG.setAttribute('y2', PAD + CELL * GRID_SIZE);
+                    vG.setAttribute('stroke', '#cbd5e1'); vG.setAttribute('stroke-width', '1.4');
+                    layerGuide.appendChild(vG);
+                }
+
+                // Vértices 4×4 bien visibles
+                for (let r = 0; r <= GRID_SIZE; r++) {
+                    for (let c = 0; c <= GRID_SIZE; c++) {
+                        const dot = document.createElementNS(SVG_NS, 'circle');
+                        dot.setAttribute('cx', PAD + c * CELL); dot.setAttribute('cy', PAD + r * CELL);
+                        dot.setAttribute('r', '4.4'); dot.setAttribute('fill', '#64748b');
+                        layerGuide.appendChild(dot);
+                    }
+                }
+
+                svgRefs[view] = { svg, layerSolution, layerMissing, layerPreview, segments: {} };
+
+                const registerSeg = (id, x1, y1, x2, y2) => {
+                    const userLine = document.createElementNS(SVG_NS, 'line');
+                    userLine.setAttribute('x1', x1); userLine.setAttribute('y1', y1);
+                    userLine.setAttribute('x2', x2); userLine.setAttribute('y2', y2);
+                    userLine.setAttribute('class', 'seg-line');
+                    userLine.style.display = 'none';
+                    layerUser.appendChild(userLine);
+                    svgRefs[view].segments[id] = { x1, y1, x2, y2, userLine };
+                };
+
+                for (let r = 0; r <= GRID_SIZE; r++)
+                    for (let c = 0; c < GRID_SIZE; c++)
+                        registerSeg(`H-${r}-${c}`, PAD + c * CELL, PAD + r * CELL, PAD + (c + 1) * CELL, PAD + r * CELL);
+
+                for (let r = 0; r < GRID_SIZE; r++)
+                    for (let c = 0; c <= GRID_SIZE; c++)
+                        registerSeg(`V-${r}-${c}`, PAD + c * CELL, PAD + r * CELL, PAD + c * CELL, PAD + (r + 1) * CELL);
+
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        const x0 = PAD + c * CELL, y0 = PAD + r * CELL;
+                        registerSeg(`D1-${r}-${c}`, x0, y0 + CELL, x0 + CELL, y0);
+                        registerSeg(`D2-${r}-${c}`, x0, y0, x0 + CELL, y0 + CELL);
+                    }
+                }
+
+                svg.addEventListener('pointerdown', (e) => handleSvgPointerDown(view, e));
+                svg.addEventListener('pointermove', (e) => handleSvgPointerMove(view, e));
+                svg.addEventListener('pointerleave', () => { if (!pointerState.active) clearPreviewLayer(view); });
+
+                container.appendChild(svg);
+            }
+
+            window.addEventListener('pointerup', handleGlobalPointerUp);
+            window.addEventListener('pointercancel', handleGlobalPointerUp);
+        }
+
+        function clearPreviewLayer(view) {
+            svgRefs[view].layerPreview.innerHTML = '';
+        }
+
+        function renderVertexDragPreview(view, { action, activeVertex = null, hoverVertex = null, cursorPt = null }) {
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const layer = svgRefs[view].layerPreview;
+            layer.innerHTML = '';
+            const color = action === 'eraser' ? '#f43f5e' : '#2563eb';
+
+            // Línea elástica sutil desde el último vértice alcanzado hasta el cursor actual
+            if (activeVertex && cursorPt) {
+                const guide = document.createElementNS(SVG_NS, 'line');
+                guide.setAttribute('x1', activeVertex.x); guide.setAttribute('y1', activeVertex.y);
+                guide.setAttribute('x2', cursorPt.x); guide.setAttribute('y2', cursorPt.y);
+                guide.setAttribute('stroke', color);
+                guide.setAttribute('stroke-width', '2');
+                guide.setAttribute('stroke-dasharray', '4 4');
+                guide.setAttribute('opacity', '0.45');
+                layer.appendChild(guide);
+            }
+
+            // Anillo en el vértice ancla activo
+            if (activeVertex) {
+                const ring = document.createElementNS(SVG_NS, 'circle');
+                ring.setAttribute('cx', activeVertex.x); ring.setAttribute('cy', activeVertex.y);
+                ring.setAttribute('r', '9.5'); ring.setAttribute('fill', color); ring.setAttribute('opacity', '0.24');
+                layer.appendChild(ring);
+
+                const dot = document.createElementNS(SVG_NS, 'circle');
+                dot.setAttribute('cx', activeVertex.x); dot.setAttribute('cy', activeVertex.y);
+                dot.setAttribute('r', '5.5'); dot.setAttribute('fill', color);
+                layer.appendChild(dot);
+            }
+
+            // Resaltado suave al pasar el ratón por un vértice antes de pulsar
+            if (hoverVertex) {
+                const ring = document.createElementNS(SVG_NS, 'circle');
+                ring.setAttribute('cx', hoverVertex.x); ring.setAttribute('cy', hoverVertex.y);
+                ring.setAttribute('r', '8.5'); ring.setAttribute('fill', color); ring.setAttribute('opacity', '0.18');
+                layer.appendChild(ring);
+
+                const dot = document.createElementNS(SVG_NS, 'circle');
+                dot.setAttribute('cx', hoverVertex.x); dot.setAttribute('cy', hoverVertex.y);
+                dot.setAttribute('r', '5.2'); dot.setAttribute('fill', color);
+                layer.appendChild(dot);
+            }
+        }
+
+        function handleSvgPointerDown(view, e) {
+            e.preventDefault();
+            try { svgRefs[view].svg.setPointerCapture(e.pointerId); } catch (_) {}
+
+            const pt = getSvgCoords(svgRefs[view].svg, e.clientX, e.clientY);
+            const startV = findNearestVertex(pt.x, pt.y, 28);
+            if (!startV) return;
+
+            const isRightClick = (e.button === 2);
+            pointerState.active = true;
+            pointerState.view = view;
+            pointerState.drawAction = isRightClick ? 'eraser' : state.tool;
+            pointerState.currentVertex = startV;
+            pointerState.strokeChanged = false;
+            pointerState.historyPushed = false;
+
+            renderVertexDragPreview(view, {
+                action: pointerState.drawAction,
+                activeVertex: startV,
+                cursorPt: pt
+            });
+        }
+
+        function handleSvgPointerMove(view, e) {
+            const pt = getSvgCoords(svgRefs[view].svg, e.clientX, e.clientY);
+
+            if (!pointerState.active) {
+                if (e.pointerType === 'mouse') {
+                    const hoverV = findNearestVertex(pt.x, pt.y, 24);
+                    if (hoverV) {
+                        renderVertexDragPreview(view, { action: state.tool, hoverVertex: hoverV });
+                    } else {
+                        clearPreviewLayer(view);
+                    }
+                }
+                return;
+            }
+
+            if (pointerState.view !== view) return;
+
+            // Detectar si el puntero pasa por encima de un nuevo vértice y generar las líneas al instante sin soltar
+            const targetV = findNearestVertex(pt.x, pt.y, 26);
+            if (targetV && (targetV.c !== pointerState.currentVertex.c || targetV.r !== pointerState.currentVertex.r)) {
+                const ids = getSegmentsBetweenVertices(pointerState.currentVertex, targetV);
+                if (ids.length > 0) {
+                    if (!pointerState.historyPushed) {
+                        pushHistory();
+                        pointerState.historyPushed = true;
+                    }
+
+                    const next = pointerState.drawAction === 'eraser' ? null : pointerState.drawAction;
+                    for (const id of ids) {
+                        const prev = state.drawings[view][id] || null;
+                        if (prev !== next) {
+                            pointerState.strokeChanged = true;
+                            if (next === null) delete state.drawings[view][id];
+                            else state.drawings[view][id] = next;
+                            renderUserSegment(view, id);
+                        }
+                    }
+
+                    if (pointerState.strokeChanged && state.checkActive) {
+                        clearCheckOverlay();
+                    }
+
+                    // El vértice alcanzado pasa a ser el nuevo punto de partida continuo
+                    pointerState.currentVertex = targetV;
+                }
+            }
+
+            renderVertexDragPreview(view, {
+                action: pointerState.drawAction,
+                activeVertex: pointerState.currentVertex,
+                cursorPt: pt
+            });
+        }
+
+        function handleGlobalPointerUp() {
+            if (!pointerState.active) return;
+            const view = pointerState.view;
+            clearPreviewLayer(view);
+
+            if (pointerState.strokeChanged) {
+                updateUndoButton();
+                saveStateToStorage();
+            } else if (pointerState.historyPushed && state.history.length > 0) {
+                state.history.pop();
+                updateUndoButton();
+            }
+
+            pointerState.active = false;
+            pointerState.view = null;
+            pointerState.drawAction = null;
+            pointerState.currentVertex = null;
+            pointerState.strokeChanged = false;
+            pointerState.historyPushed = false;
+        }
+
+        function renderUserSegment(view, id) {
+            const ref = svgRefs[view].segments[id];
+            const val = state.drawings[view][id];
+            const line = ref.userLine;
+            line.classList.remove('seg-solid', 'seg-dashed', 'seg-check-ok', 'seg-check-wrong');
+            if (!val) {
+                line.style.display = 'none';
+            } else {
+                line.style.display = 'inline';
+                line.classList.add(val === 'solid' ? 'seg-solid' : 'seg-dashed');
+            }
+        }
+
+        function renderAllUserDrawings() {
+            for (const view of VIEWS) {
+                for (const id of Object.keys(svgRefs[view].segments)) {
+                    renderUserSegment(view, id);
+                }
+            }
+        }
+
+        /* =========================================================================
+         * HISTORIAL, LIMPIEZA, COMPROBACIÓN Y SOLUCIÓN
+         * ========================================================================= */
+        function pushHistory() {
+            state.history.push(cloneDrawings(state.drawings));
+            if (state.history.length > 60) state.history.shift();
+            updateUndoButton();
+        }
+
+        function undo() {
+            if (state.history.length === 0) return;
+            state.drawings = state.history.pop();
+            if (state.checkActive) clearCheckOverlay();
+            renderAllUserDrawings();
+            updateUndoButton();
+            saveStateToStorage();
+        }
+
+        function clearAllDrawings() {
+            const hasAny = VIEWS.some(v => Object.keys(state.drawings[v]).length > 0);
+            if (!hasAny) return;
+            pushHistory();
+            state.drawings = createEmptyDrawings();
+            if (state.checkActive) clearCheckOverlay();
+            renderAllUserDrawings();
+            saveStateToStorage();
+            showToast('Tablero limpiado');
+        }
+
+        function updateUndoButton() {
+            document.getElementById('btn-undo').disabled = state.history.length === 0;
+        }
+
+        function checkDrawing() {
+            state.checkActive = true;
+            const isPractice = (state.mode === 'practice');
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+
+            let totalExpected = 0, correctCount = 0, wrongOrExtra = 0, missingCount = 0;
+            const perViewStats = {};
+
+            for (const view of VIEWS) {
+                const layerMissing = svgRefs[view].layerMissing;
+                layerMissing.innerHTML = '';
+
+                const expectedMap = state.solution[view];
+                const userMap = state.drawings[view];
+                let vExpected = 0, vCorrect = 0, vErrors = 0, vMissing = 0;
+
+                for (const id of Object.keys(svgRefs[view].segments)) {
+                    const exp = expectedMap[id] || null;
+                    const usr = userMap[id] || null;
+                    const ref = svgRefs[view].segments[id];
+                    ref.userLine.classList.remove('seg-check-ok', 'seg-check-wrong');
+
+                    if (exp) { totalExpected++; vExpected++; }
+
+                    if (exp && usr === exp) {
+                        correctCount++; vCorrect++;
+                        if (isPractice) ref.userLine.classList.add('seg-check-ok');
+                    } else if (usr && usr !== exp) {
+                        wrongOrExtra++; vErrors++;
+                        if (isPractice) ref.userLine.classList.add('seg-check-wrong');
+                    } else if (exp && !usr) {
+                        missingCount++; vMissing++;
+                        if (isPractice) {
+                            const missLine = document.createElementNS(SVG_NS, 'line');
+                            missLine.setAttribute('x1', ref.x1); missLine.setAttribute('y1', ref.y1);
+                            missLine.setAttribute('x2', ref.x2); missLine.setAttribute('y2', ref.y2);
+                            missLine.setAttribute('class', 'seg-check-missing');
+                            if (exp === 'dashed') missLine.setAttribute('stroke-dasharray', '6 6');
+                            layerMissing.appendChild(missLine);
+                        }
+                    }
+                }
+                perViewStats[view] = { expected: vExpected, correct: vCorrect, errors: vErrors, missing: vMissing };
+            }
+
+            const denom = totalExpected + wrongOrExtra;
+            const score = denom === 0 ? 100 : Math.round((correctCount / denom) * 100);
+            const isPerfect = (correctCount === totalExpected && wrongOrExtra === 0 && missingCount === 0);
+
+            // En modo Evaluación, si hay errores NO se marcan aristas ni se dan pistas por vista
+            if (!isPractice && !isPerfect) {
+                document.getElementById('feedback-default').classList.add('hidden');
+                document.getElementById('feedback-score-box').classList.add('hidden');
+                document.getElementById('legend-check').classList.add('hidden');
+                document.getElementById('feedback-eval-error').classList.remove('hidden');
+                showToast('Hay errores en las vistas. Revisa tu dibujo e inténtalo de nuevo.');
+                return;
+            }
+
+            document.getElementById('feedback-eval-error').classList.add('hidden');
+            document.getElementById('feedback-default').classList.add('hidden');
+            document.getElementById('feedback-score-box').classList.remove('hidden');
+            document.getElementById('legend-check').classList.toggle('hidden', !isPractice);
+
+            const scoreEl = document.getElementById('score-percent');
+            const barEl = document.getElementById('score-bar');
+            scoreEl.textContent = `${score}%`;
+            barEl.style.width = `${score}%`;
+
+            if (isPerfect) {
+                scoreEl.className = 'text-2xl font-extrabold text-emerald-600';
+                barEl.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
+            } else if (score >= 70) {
+                scoreEl.className = 'text-2xl font-extrabold text-blue-600';
+                barEl.className = 'h-full bg-blue-500 rounded-full transition-all duration-500';
+            } else {
+                scoreEl.className = 'text-2xl font-extrabold text-amber-600';
+                barEl.className = 'h-full bg-amber-500 rounded-full transition-all duration-500';
+            }
+
+            const labels = { alzado: 'Alzado', perfil: 'Perfil Izq.', planta: 'Planta' };
+            document.getElementById('score-details').innerHTML = VIEWS.map(v => {
+                const st = perViewStats[v];
+                if (st.correct === st.expected && st.errors === 0) {
+                    return `<div class="flex justify-between"><span>${labels[v]}:</span> <span class="text-emerald-600 font-bold">¡Perfecto!</span></div>`;
+                }
+                const parts = [];
+                if (st.missing > 0) parts.push(`<span class="text-amber-600 font-semibold">faltan ${st.missing}</span>`);
+                if (st.errors > 0) parts.push(`<span class="text-rose-600 font-semibold">${st.errors} err.</span>`);
+                return `<div class="flex justify-between"><span>${labels[v]}:</span> <span>${parts.join(', ')}</span></div>`;
+            }).join('');
+
+            if (!isPractice && isPerfect) {
+                const lvl = state.evalData[state.evalLevel];
+                const item = lvl.sequence[lvl.currentIndex];
+                const wasAlreadySolved = item.solved;
+                item.solved = true;
+                item.drawings = cloneDrawings(state.drawings);
+                item.solvedAt = new Date().toISOString();
+                item.thumbnail = captureIsometricThumbnail(item.grid);
+
+                const totalSolved = lvl.sequence.filter(s => s.solved).length;
+                lvl.completed = (totalSolved === 10);
+                saveStateToStorage();
+                updateEvalUI();
+
+                if (lvl.completed && !wasAlreadySolved) {
+                    openCongratsModal();
+                } else {
+                    showToast('¡100% correcto! Figura guardada. Puedes continuar.');
+                }
+            } else if (isPerfect) {
+                showToast('¡Excelente! Todas las vistas son 100% correctas.');
+            }
+        }
+
+        function clearCheckOverlay() {
+            state.checkActive = false;
+            for (const view of VIEWS) {
+                svgRefs[view].layerMissing.innerHTML = '';
+                for (const id of Object.keys(svgRefs[view].segments)) {
+                    svgRefs[view].segments[id].userLine.classList.remove('seg-check-ok', 'seg-check-wrong');
+                }
+            }
+            document.getElementById('feedback-eval-error').classList.add('hidden');
+            document.getElementById('feedback-default').classList.remove('hidden');
+            document.getElementById('feedback-score-box').classList.add('hidden');
+            document.getElementById('legend-check').classList.add('hidden');
+        }
+
+        function toggleSolution() {
+            if (state.mode !== 'practice') return;
+            state.showSolution = !state.showSolution;
+            renderSolutionOverlay();
+        }
+
+        function renderSolutionOverlay() {
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const btnText = document.getElementById('btn-solution-text');
+            const btn = document.getElementById('btn-solution');
+            const active = state.showSolution && state.mode === 'practice';
+
+            if (active) {
+                btnText.textContent = 'Ocultar solución';
+                btn.classList.add('bg-blue-50', 'border-blue-300', 'text-blue-700');
+                btn.classList.remove('bg-white', 'border-slate-300', 'text-slate-700');
+            } else {
+                btnText.textContent = 'Ver solución';
+                btn.classList.remove('bg-blue-50', 'border-blue-300', 'text-blue-700');
+                btn.classList.add('bg-white', 'border-slate-300', 'text-slate-700');
+            }
+
+            for (const view of VIEWS) {
+                const layer = svgRefs[view].layerSolution;
+                layer.innerHTML = '';
+                if (!active) continue;
+                for (const [id, type] of Object.entries(state.solution[view])) {
+                    const ref = svgRefs[view].segments[id];
+                    if (!ref) continue;
+                    const line = document.createElementNS(SVG_NS, 'line');
+                    line.setAttribute('x1', ref.x1); line.setAttribute('y1', ref.y1);
+                    line.setAttribute('x2', ref.x2); line.setAttribute('y2', ref.y2);
+                    line.setAttribute('class', type === 'solid' ? 'seg-solution-solid' : 'seg-solution-dashed');
+                    layer.appendChild(line);
+                }
+            }
+        }
+
+        /* =========================================================================
+         * GENERACIÓN DE DIPLOMAS Y CERTIFICADOS EN PDF 100% RASTERIZADOS (CANVAS)
+         * CON PATRÓN ANTIFALSIFICACIÓN DE LÍNEAS ALEATORIAS EN EL FONDO
+         * ========================================================================= */
+        const PDF_CANVAS_W = 1654; // A4 vertical a ~200 DPI (210 × 297 mm)
+        const PDF_CANVAS_H = 2339;
+
+        function loadImageAsync(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = (err) => reject(err);
+                img.src = src;
+            });
+        }
+
+        function drawCanvasRoundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        /**
+         * Dibuja un patrón antifalsificación de líneas rectas aleatorias en gris muy claro
+         * por todo el fondo de la página antes de pintar marcos, textos y gráficos.
+         */
+        function drawAntiForgeryBackground(ctx, w, h) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.save();
+            const lineCount = 240;
+            for (let i = 0; i < lineCount; i++) {
+                const x1 = Math.random() * w;
+                const y1 = Math.random() * h;
+                const angle = Math.random() * Math.PI * 2;
+                const len = 140 + Math.random() * 520;
+                const x2 = x1 + Math.cos(angle) * len;
+                const y2 = y1 + Math.sin(angle) * len;
+                const alpha = 0.18 + Math.random() * 0.18;
+
+                ctx.strokeStyle = `rgba(176, 186, 198, ${alpha.toFixed(2)})`;
+                ctx.lineWidth = 1 + Math.random() * 1.4;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        /**
+         * Dibuja una vista ortográfica (Alzado, Perfil Izquierdo o Planta) sobre el canvas del PDF.
+         */
+        function drawViewOnCanvas(ctx, viewDrawings, x, y, size, title, accentColor) {
+            const pad = 18;
+            const inner = size - pad * 2;
+            const cell = inner / GRID_SIZE;
+
+            ctx.save();
+            ctx.fillStyle = accentColor;
+            ctx.beginPath();
+            ctx.arc(x + 10, y - 14, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = '700 22px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(title, x + 24, y - 14);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+            drawCanvasRoundRect(ctx, x, y, size, size, 14);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1.6;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                const px = x + pad + i * cell;
+                const py = y + pad + i * cell;
+                ctx.beginPath();
+                ctx.moveTo(x + pad, py);
+                ctx.lineTo(x + pad + inner, py);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(px, y + pad);
+                ctx.lineTo(px, y + pad + inner);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#94a3b8';
+            for (let r = 0; r <= GRID_SIZE; r++) {
+                for (let c = 0; c <= GRID_SIZE; c++) {
+                    ctx.beginPath();
+                    ctx.arc(x + pad + c * cell, y + pad + r * cell, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const map = viewDrawings || {};
+            for (const [segId, type] of Object.entries(map)) {
+                const parts = segId.split('-');
+                const kind = parts[0];
+                const r = parseInt(parts[1], 10);
+                const c = parseInt(parts[2], 10);
+
+                let x1, y1, x2, y2;
+                if (kind === 'H') {
+                    x1 = x + pad + c * cell;
+                    y1 = y + pad + r * cell;
+                    x2 = x + pad + (c + 1) * cell;
+                    y2 = y1;
+                } else if (kind === 'V') {
+                    x1 = x + pad + c * cell;
+                    y1 = y + pad + r * cell;
+                    x2 = x1;
+                    y2 = y + pad + (r + 1) * cell;
+                } else if (kind === 'D1') {
+                    x1 = x + pad + c * cell;
+                    y1 = y + pad + (r + 1) * cell;
+                    x2 = x + pad + (c + 1) * cell;
+                    y2 = y + pad + r * cell;
+                } else if (kind === 'D2') {
+                    x1 = x + pad + c * cell;
+                    y1 = y + pad + r * cell;
+                    x2 = x + pad + (c + 1) * cell;
+                    y2 = y + pad + (r + 1) * cell;
+                } else {
+                    continue;
+                }
+
+                ctx.beginPath();
+                if (type === 'solid') {
+                    ctx.setLineDash([]);
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 5.5;
+                    ctx.lineCap = 'round';
+                } else {
+                    ctx.setLineDash([12, 8]);
+                    ctx.strokeStyle = '#334155';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'butt';
+                }
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+
+        /**
+         * Genera la portada rasterizada del Diploma Oficial o Certificado de Avance.
+         */
+        function renderDiplomaCoverCanvas({ isOfficial, userName, levelLabel, solvedCount, totalCount, dateStr, verificationCode }) {
+            const canvas = document.createElement('canvas');
+            canvas.width = PDF_CANVAS_W;
+            canvas.height = PDF_CANVAS_H;
+            const ctx = canvas.getContext('2d');
+
+            drawAntiForgeryBackground(ctx, PDF_CANVAS_W, PDF_CANVAS_H);
+
+            const primaryColor = isOfficial ? '#b45309' : '#3730a3';
+            const accentColor = isOfficial ? '#f59e0b' : '#4f46e5';
+            const softBg = isOfficial ? 'rgba(254, 243, 199, 0.72)' : 'rgba(224, 231, 255, 0.72)';
+
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 10;
+            drawCanvasRoundRect(ctx, 70, 70, PDF_CANVAS_W - 140, PDF_CANVAS_H - 140, 36);
+            ctx.stroke();
+
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 3;
+            drawCanvasRoundRect(ctx, 96, 96, PDF_CANVAS_W - 192, PDF_CANVAS_H - 192, 26);
+            ctx.stroke();
+
+            const cx = PDF_CANVAS_W / 2;
+            ctx.fillStyle = softBg;
+            ctx.beginPath();
+            ctx.arc(cx, 290, 96, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            ctx.fillStyle = primaryColor;
+            ctx.font = '800 72px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(isOfficial ? '★' : '3D', cx, 294);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '700 28px Inter, sans-serif';
+            ctx.fillText('TALLER DE VISTAS DIÉDRICAS 3D · SISTEMA EUROPEO (ISO-E)', cx, 455);
+
+            ctx.fillStyle = primaryColor;
+            ctx.font = '800 76px Inter, sans-serif';
+            ctx.fillText(isOfficial ? 'DIPLOMA OFICIAL' : 'CERTIFICADO DE AVANCE', cx, 565);
+
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(cx - 280, 625);
+            ctx.lineTo(cx + 280, 625);
+            ctx.stroke();
+
+            ctx.fillStyle = '#334155';
+            ctx.font = '500 34px Inter, sans-serif';
+            ctx.fillText('Se certifica que el alumno / la alumna:', cx, 750);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            drawCanvasRoundRect(ctx, 180, 815, PDF_CANVAS_W - 360, 150, 24);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            let nameFontSize = 64;
+            ctx.font = `800 ${nameFontSize}px Inter, sans-serif`;
+            while (ctx.measureText(userName).width > PDF_CANVAS_W - 430 && nameFontSize > 32) {
+                nameFontSize -= 4;
+                ctx.font = `800 ${nameFontSize}px Inter, sans-serif`;
+            }
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(userName, cx, 892);
+
+            ctx.fillStyle = '#334155';
+            ctx.font = '500 34px Inter, sans-serif';
+            const desc1 = isOfficial
+                ? 'ha superado satisfactoriamente todas las figuras de evaluación'
+                : 'ha completado correctamente hasta el momento las siguientes';
+            const desc2 = isOfficial
+                ? 'en representación de vistas ortográficas (Alzado, Perfil Izquierdo y Planta).'
+                : 'figuras de evaluación en representación de vistas ortográficas 3D.';
+            ctx.fillText(desc1, cx, 1075);
+            ctx.fillText(desc2, cx, 1128);
+
+            const cardY = 1235;
+            const cardW = 580;
+            const cardH = 240;
+            const gap = 70;
+            const leftX = cx - cardW - gap / 2;
+            const rightX = cx + gap / 2;
+
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
+            drawCanvasRoundRect(ctx, leftX, cardY, cardW, cardH, 24);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '700 26px Inter, sans-serif';
+            ctx.fillText('NIVEL DE DIFICULTAD', leftX + cardW / 2, cardY + 72);
+
+            ctx.fillStyle = primaryColor;
+            ctx.font = '800 56px Inter, sans-serif';
+            ctx.fillText(levelLabel.toUpperCase(), leftX + cardW / 2, cardY + 155);
+
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
+            drawCanvasRoundRect(ctx, rightX, cardY, cardW, cardH, 24);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '700 26px Inter, sans-serif';
+            ctx.fillText('FIGURAS RESUELTAS', rightX + cardW / 2, cardY + 72);
+
+            ctx.fillStyle = solvedCount === totalCount ? '#059669' : '#0f172a';
+            ctx.font = '800 56px Inter, sans-serif';
+            ctx.fillText(`${solvedCount} / ${totalCount}`, rightX + cardW / 2, cardY + 155);
+
+            const barW = 1040;
+            const barH = 34;
+            const barX = cx - barW / 2;
+            const barY = 1580;
+
+            ctx.fillStyle = '#e2e8f0';
+            drawCanvasRoundRect(ctx, barX, barY, barW, barH, 17);
+            ctx.fill();
+
+            const pct = Math.max(0, Math.min(1, solvedCount / totalCount));
+            if (pct > 0) {
+                ctx.fillStyle = isOfficial ? '#f59e0b' : '#4f46e5';
+                drawCanvasRoundRect(ctx, barX, barY, Math.max(34, barW * pct), barH, 17);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '700 28px Inter, sans-serif';
+            ctx.fillText(`Progreso completado: ${Math.round(pct * 100)}%`, cx, barY + 72);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '500 26px Inter, sans-serif';
+            const annexNote = solvedCount > 0
+                ? 'En las páginas siguientes se adjuntan todas las piezas 3D resueltas y sus vistas dibujadas.'
+                : 'Aún no se ha completado ninguna figura en este nivel de evaluación.';
+            ctx.fillText(annexNote, cx, 1840);
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(160, 2030);
+            ctx.lineTo(PDF_CANVAS_W - 160, 2030);
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#475569';
+            ctx.font = '600 26px Inter, sans-serif';
+            ctx.fillText(`Fecha de emisión: ${dateStr}`, 170, 2095);
+
+            ctx.textAlign = 'right';
+            ctx.fillText(`Código: ${verificationCode}`, PDF_CANVAS_W - 170, 2095);
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '500 22px Inter, sans-serif';
+            ctx.fillText('Documento rasterizado con trama antifalsificación · Taller de Vistas Diédricas 3D', cx, 2180);
+
+            return canvas.toDataURL('image/jpeg', 0.92);
+        }
+
+        /**
+         * Genera una página anexa rasterizada con hasta 2 figuras resueltas.
+         */
+        async function renderSolvedFiguresPageCanvas({ items, pageNum, totalPages, userName, levelLabel }) {
+            const canvas = document.createElement('canvas');
+            canvas.width = PDF_CANVAS_W;
+            canvas.height = PDF_CANVAS_H;
+            const ctx = canvas.getContext('2d');
+
+            drawAntiForgeryBackground(ctx, PDF_CANVAS_W, PDF_CANVAS_H);
+
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
+            drawCanvasRoundRect(ctx, 70, 60, PDF_CANVAS_W - 140, 105, 18);
+            ctx.fill();
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '800 32px Inter, sans-serif';
+            ctx.fillText(`Anexo de Figuras Resueltas · Nivel ${levelLabel}`, 105, 98);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '600 23px Inter, sans-serif';
+            ctx.fillText(`Alumno/a: ${userName}`, 105, 138);
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#64748b';
+            ctx.font = '700 24px Inter, sans-serif';
+            ctx.fillText(`Página ${pageNum} de ${totalPages}`, PDF_CANVAS_W - 105, 114);
+
+            const cardH = 980;
+            const startY = 200;
+            const cardGap = 55;
+
+            for (let i = 0; i < items.length; i++) {
+                const entry = items[i];
+                const topY = startY + i * (cardH + cardGap);
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.84)';
+                drawCanvasRoundRect(ctx, 70, topY, PDF_CANVAS_W - 140, cardH, 24);
+                ctx.fill();
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                const diffLabel = DIFFICULTY_META[entry.item.difficulty]?.label || entry.item.difficulty;
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '800 34px Inter, sans-serif';
+                ctx.fillText(`Figura #${entry.index + 1}`, 110, topY + 56);
+
+                ctx.fillStyle = '#e0f2fe';
+                drawCanvasRoundRect(ctx, 310, topY + 32, 230, 46, 14);
+                ctx.fill();
+                ctx.fillStyle = '#0369a1';
+                ctx.font = '700 22px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(diffLabel, 425, topY + 56);
+
+                ctx.fillStyle = '#dcfce7';
+                drawCanvasRoundRect(ctx, PDF_CANVAS_W - 335, topY + 32, 225, 46, 14);
+                ctx.fill();
+                ctx.fillStyle = '#15803d';
+                ctx.font = '700 22px Inter, sans-serif';
+                ctx.fillText('✓ 100% Correcta', PDF_CANVAS_W - 222, topY + 56);
+
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(105, topY + 100);
+                ctx.lineTo(PDF_CANVAS_W - 105, topY + 100);
+                ctx.stroke();
+
+                const imgBoxX = 110;
+                const imgBoxY = topY + 150;
+                const imgBoxW = 540;
+                const imgBoxH = 465;
+
+                ctx.fillStyle = '#ffffff';
+                drawCanvasRoundRect(ctx, imgBoxX, imgBoxY, imgBoxW, imgBoxH, 18);
+                ctx.fill();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (entry.thumbnail) {
+                    try {
+                        const img = await loadImageAsync(entry.thumbnail);
+                        ctx.drawImage(img, imgBoxX + 12, imgBoxY + 12, imgBoxW - 24, imgBoxH - 24);
+                    } catch (_) {}
+                }
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#475569';
+                ctx.font = '700 22px Inter, sans-serif';
+                ctx.fillText('Perspectiva Isométrica 3D', imgBoxX + imgBoxW / 2, imgBoxY + imgBoxH + 36);
+
+                const counts = countPieces(entry.item.grid);
+                const statsText = counts.ramps > 0
+                    ? `${counts.cubes} cubos · ${counts.ramps} rampas`
+                    : `${counts.cubes} cubos`;
+                ctx.fillStyle = '#64748b';
+                ctx.font = '500 21px Inter, sans-serif';
+                ctx.fillText(statsText, imgBoxX + imgBoxW / 2, imgBoxY + imgBoxH + 72);
+
+                const viewSize = 350;
+                const viewsBaseX = 720;
+                const viewsGapX = 65;
+                const viewsTopY = topY + 165;
+                const viewsBotY = topY + 575;
+
+                drawViewOnCanvas(ctx, entry.item.drawings?.alzado, viewsBaseX, viewsTopY, viewSize, 'ALZADO (+Z)', '#2563eb');
+                drawViewOnCanvas(ctx, entry.item.drawings?.perfil, viewsBaseX + viewSize + viewsGapX, viewsTopY, viewSize, 'PERFIL IZQ. (-X)', '#d97706');
+                drawViewOnCanvas(ctx, entry.item.drawings?.planta, viewsBaseX, viewsBotY, viewSize, 'PLANTA (+Y)', '#059669');
+
+                const legX = viewsBaseX + viewSize + viewsGapX;
+                const legY = viewsBotY;
+                ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
+                drawCanvasRoundRect(ctx, legX, legY, viewSize, viewSize, 14);
+                ctx.fill();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#334155';
+                ctx.font = '700 22px Inter, sans-serif';
+                ctx.fillText('Sistema Europeo', legX + 28, legY + 58);
+
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 5;
+                ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.moveTo(legX + 28, legY + 130);
+                ctx.lineTo(legX + 100, legY + 130);
+                ctx.stroke();
+                ctx.fillStyle = '#475569';
+                ctx.font = '500 20px Inter, sans-serif';
+                ctx.fillText('Arista visible', legX + 116, legY + 132);
+
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 7]);
+                ctx.beginPath();
+                ctx.moveTo(legX + 28, legY + 190);
+                ctx.lineTo(legX + 100, legY + 190);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillText('Arista oculta', legX + 116, legY + 192);
+
+                if (entry.item.solvedAt) {
+                    const d = new Date(entry.item.solvedAt);
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '500 18px Inter, sans-serif';
+                    ctx.fillText(`Resuelta: ${d.toLocaleDateString('es-ES')}`, legX + 28, legY + 292);
+                }
+            }
+
+            return canvas.toDataURL('image/jpeg', 0.91);
+        }
+
+        /**
+         * Genera y descarga el PDF oficial o de avance completamente rasterizado.
+         */
+        async function generateEvaluationPDF(isOfficial) {
+            try {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    showToast('La librería PDF no se ha cargado correctamente.');
+                    return;
+                }
+
+                const lvl = ensureEvalLevelInitialized(state.evalLevel);
+                const levelLabel = EVAL_BLUEPRINTS[state.evalLevel].label;
+                const solvedEntries = [];
+
+                lvl.sequence.forEach((item, idx) => {
+                    if (item.solved) {
+                        const thumb = item.thumbnail || captureIsometricThumbnail(item.grid);
+                        item.thumbnail = thumb;
+                        solvedEntries.push({ index: idx, item, thumbnail: thumb });
+                    }
+                });
+
+                const solvedCount = solvedEntries.length;
+                if (isOfficial && solvedCount < 10) {
+                    showToast('Debes completar las 10 figuras para descargar el Diploma Oficial.');
+                    return;
+                }
+
+                showToast('Generando PDF rasterizado...');
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const verificationCode = `VD3D-${state.evalLevel.slice(0, 3).toUpperCase()}-${solvedCount}DE10-${now.getTime().toString(36).slice(-5).toUpperCase()}`;
+
+                const coverUrl = renderDiplomaCoverCanvas({
+                    isOfficial,
+                    userName: state.userName || 'Alumno',
+                    levelLabel,
+                    solvedCount,
+                    totalCount: 10,
+                    dateStr,
+                    verificationCode
+                });
+                doc.addImage(coverUrl, 'JPEG', 0, 0, 210, 297);
+
+                const annexPages = Math.ceil(solvedEntries.length / 2);
+                const totalPages = 1 + annexPages;
+
+                for (let p = 0; p < annexPages; p++) {
+                    const pair = solvedEntries.slice(p * 2, p * 2 + 2);
+                    const pageUrl = await renderSolvedFiguresPageCanvas({
+                        items: pair,
+                        pageNum: p + 2,
+                        totalPages,
+                        userName: state.userName || 'Alumno',
+                        levelLabel
+                    });
+                    doc.addPage();
+                    doc.addImage(pageUrl, 'JPEG', 0, 0, 210, 297);
+                }
+
+                const safeName = (state.userName || 'Alumno')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9]+/g, '_')
+                    .replace(/^_|_$/g, '');
+                const prefix = isOfficial ? 'Diploma_Oficial' : 'Diploma_Avance';
+                doc.save(`${prefix}_${levelLabel}_${safeName}.pdf`);
+                showToast('PDF descargado correctamente');
+            } catch (err) {
+                console.error('Error al generar el PDF:', err);
+                showToast('No se pudo generar el PDF.');
+            }
+        }
+
+        function setMobileView(viewMode) {
+            state.mobileView = viewMode;
+            const mainEl = document.getElementById('main-workspace');
+            const panel3D = document.getElementById('panel-3d');
+            const panelDraw = document.getElementById('panel-draw');
+
+            panel3D.classList.toggle('hidden', viewMode === 'draw');
+            panel3D.classList.toggle('lg:flex', viewMode === 'draw');
+            panelDraw.classList.toggle('hidden', viewMode === '3d');
+            panelDraw.classList.toggle('lg:flex', viewMode === '3d');
+
+            mainEl.classList.toggle('grid-rows-[minmax(0,42%)_minmax(0,58%)]', viewMode === 'both');
+            mainEl.classList.toggle('grid-rows-1', viewMode !== 'both');
+
+            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
+                const active = btn.dataset.mobileView === viewMode;
+                btn.classList.toggle('bg-slate-900', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('bg-slate-100', !active);
+                btn.classList.toggle('text-slate-600', !active);
+            });
+        }
+
+        /* =========================================================================
+         * ENLACE DE EVENTOS DE INTERFAZ Y ARRANQUE
+         * ========================================================================= */
+        function bindUIEvents() {
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('student-name-input');
+                const name = input.value.trim();
+                if (name.length < 2) {
+                    document.getElementById('login-error').classList.remove('hidden');
+                    input.focus();
+                    return;
+                }
+                document.getElementById('login-error').classList.add('hidden');
+                restoreUserSession(name);
+                showToast(`¡Bienvenido/a, ${name}!`);
+            });
+
+            document.getElementById('btn-logout').addEventListener('click', () => {
+                openConfirmModal(
+                    'Cerrar sesión de alumno',
+                    `¿Quieres cerrar la sesión de "${state.userName}"? Tu avance quedará guardado localmente en este dispositivo por si vuelves a entrar con el mismo nombre.`,
+                    'Cerrar sesión',
+                    () => logoutUser()
+                );
+            });
+
+            document.getElementById('confirm-cancel').addEventListener('click', closeConfirmModal);
+            document.getElementById('confirm-ok').addEventListener('click', () => {
+                const cb = confirmCallback;
+                closeConfirmModal();
+                if (cb) cb();
+            });
+
+            document.getElementById('btn-congrats-pdf').addEventListener('click', () => generateEvaluationPDF(true));
+            document.getElementById('btn-congrats-close').addEventListener('click', () => {
+                document.getElementById('congrats-modal').classList.add('hidden');
+            });
+
+            document.getElementById('tab-practice').addEventListener('click', () => {
+                if (state.mode !== 'practice') switchMode('practice');
+            });
+            document.getElementById('tab-eval').addEventListener('click', () => {
+                if (state.mode !== 'eval') switchMode('eval');
+            });
+
+            document.getElementById('practice-diff-select').addEventListener('change', (e) => {
+                state.practiceDifficulty = e.target.value;
+                startPracticeFigure();
+                saveStateToStorage();
+                showToast(`Nivel de práctica: ${DIFFICULTY_META[state.practiceDifficulty].label}`);
+            });
+
+            document.getElementById('btn-new-figure').addEventListener('click', () => {
+                startPracticeFigure();
+                showToast(`Nueva figura (${DIFFICULTY_META[state.practiceDifficulty].label})`);
+            });
+
+            document.getElementById('btn-check-practice').addEventListener('click', checkDrawing);
+            document.getElementById('btn-solution').addEventListener('click', toggleSolution);
+
+            document.querySelectorAll('.eval-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const nextLevel = btn.dataset.evalLevel;
+                    if (nextLevel === state.evalLevel) return;
+                    saveStateToStorage();
+                    state.evalLevel = nextLevel;
+                    loadCurrentEvalFigure();
+                    saveStateToStorage();
+                });
+            });
+
+            document.getElementById('btn-check-eval').addEventListener('click', checkDrawing);
+            document.getElementById('btn-next-eval').addEventListener('click', advanceEvalStep);
+            document.getElementById('btn-pdf-progress').addEventListener('click', () => generateEvaluationPDF(false));
+            document.getElementById('btn-pdf-official').addEventListener('click', () => generateEvaluationPDF(true));
+
+            document.getElementById('btn-reset-eval').addEventListener('click', () => {
+                const label = EVAL_BLUEPRINTS[state.evalLevel].label;
+                openConfirmModal(
+                    `Reiniciar nivel ${label}`,
+                    `Se borrará tu avance actual en el nivel ${label} y se generarán 10 figuras aleatorias nuevas. ¿Deseas continuar?`,
+                    'Sí, reiniciar',
+                    () => {
+                        state.evalData[state.evalLevel] = null;
+                        loadCurrentEvalFigure();
+                        saveStateToStorage();
+                        showToast(`Nivel ${label} reiniciado`);
+                    }
+                );
+            });
+
+            document.querySelectorAll('.mobile-view-btn').forEach(btn => {
+                btn.addEventListener('click', () => setMobileView(btn.dataset.mobileView));
+            });
+
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.tool = btn.dataset.tool;
+                });
+            });
+
+            document.querySelectorAll('.cam-btn').forEach(btn => {
+                btn.addEventListener('click', () => animateCameraTo(btn.dataset.cam));
+            });
+
+            document.getElementById('btn-unit-grid').addEventListener('click', (e) => {
+                state.showUnitGrid = !state.showUnitGrid;
+                if (unitGridLines) unitGridLines.visible = state.showUnitGrid;
+                const btn = e.currentTarget;
+                btn.classList.toggle('bg-blue-50', state.showUnitGrid);
+                btn.classList.toggle('border-blue-300', state.showUnitGrid);
+                btn.classList.toggle('text-blue-700', state.showUnitGrid);
+            });
+
+            document.getElementById('btn-undo').addEventListener('click', undo);
+            document.getElementById('btn-clear').addEventListener('click', clearAllDrawings);
+            document.getElementById('btn-clear-check').addEventListener('click', clearCheckOverlay);
+
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                    e.preventDefault();
+                    undo();
+                }
+            });
+        }
+
+        window.onload = function () {
+            try {
+                buildDrawingGrids();
+                init3D();
+                bindUIEvents();
+                animateLoop();
+
+                const root = loadStorageRoot();
+                if (root.activeUser) {
+                    restoreUserSession(root.activeUser);
+                } else {
+                    startPracticeFigure();
+                    document.getElementById('login-modal').classList.remove('hidden');
+                    setTimeout(() => document.getElementById('student-name-input').focus(), 100);
+                }
+            } catch (err) {
+                console.error('Error al inicializar:', err);
+                showToast('Error al inicializar la aplicación 3D');
+            }
+        };
+    </script>
+</body>
+</html>
